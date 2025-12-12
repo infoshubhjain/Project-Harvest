@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart' as home;
 import 'settings_page.dart';
 import 'dining_hall_detail_page.dart';
+import '../utils/responsive.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -43,20 +44,36 @@ class MainPage extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              // Logo at the top
-              Center(
-                child: Image.asset(
-                  'assets/images/Logo.png',
-                  height: 60, // adjust as needed
-                ),
-              ),
-              const SizedBox(height: 16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: Responsive.getMaxWidth(context)),
+            child: SingleChildScrollView(
+              padding: Responsive.getPadding(context),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 10),
+                  // Logo and title at the top
+                  Center(
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'assets/images/Logo.png',
+                          height: Responsive.getLogoSize(context),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Dining Halls',
+                          style: TextStyle(
+                            fontSize: Responsive.isDesktop(context) ? 28 : 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
               // Search bar
               TextField(
@@ -272,10 +289,9 @@ class MainPage extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-
-
-
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

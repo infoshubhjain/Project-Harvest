@@ -4,6 +4,7 @@ import 'settings_page.dart';
 import '../services/nutrition_service.dart';
 import '../services/user_service.dart';
 import '../models/meal_entry.dart';
+import '../utils/responsive.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -38,34 +39,36 @@ class _MainPageState extends State<MainPage> {
       _error = '';
     });
 
-    try {
-      // Get current user
-      final user = await UserService.getCurrentUser();
-      if (user == null) {
-        setState(() {
-          _error = 'Not logged in';
-          _isLoading = false;
-        });
-        return;
-      }
+    // Skip backend calls for now - just show the UI
+    setState(() {
+      _isLoading = false;
+      _userCalorieGoal = 2000;
+    });
 
-      _userId = user['id'];
-      _userCalorieGoal = user['calories'] ?? 2000;
-
-      // Get today's totals
-      final todayData = await NutritionService.getTodayTotals(_userId!);
-
-      setState(() {
-        _todayTotals = todayData['totals'];
-        _todayMeals = todayData['meals'];
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+    // Uncomment this when backend is available:
+    // try {
+    //   final user = await UserService.getCurrentUser();
+    //   if (user == null) {
+    //     setState(() {
+    //       _error = 'Not logged in';
+    //       _isLoading = false;
+    //     });
+    //     return;
+    //   }
+    //   _userId = user['id'];
+    //   _userCalorieGoal = user['calories'] ?? 2000;
+    //   final todayData = await NutritionService.getTodayTotals(_userId!);
+    //   setState(() {
+    //     _todayTotals = todayData['totals'];
+    //     _todayMeals = todayData['meals'];
+    //     _isLoading = false;
+    //   });
+    // } catch (e) {
+    //   setState(() {
+    //     _error = e.toString();
+    //     _isLoading = false;
+    //   });
+    // }
   }
 
   @override
@@ -107,21 +110,44 @@ class _MainPageState extends State<MainPage> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: Responsive.getMaxWidth(context)),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: Responsive.getPadding(context),
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10),
-                // Logo at the top
+                // Logo and title at the top
                 Center(
-                  child: Image.asset(
-                    'assets/images/Logo.png',
-                    height: 60,
+                  child: Column(
+                    children: [
+                      Image.asset(
+                        'assets/images/Logo.png',
+                        height: Responsive.getLogoSize(context),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Project Harvest',
+                        style: TextStyle(
+                          fontSize: Responsive.isDesktop(context) ? 28 : 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade800,
+                        ),
+                      ),
+                      Text(
+                        'University Dining Nutrition Tracker',
+                        style: TextStyle(
+                          fontSize: Responsive.isDesktop(context) ? 14 : 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
                 // Error message
                 if (_error.isNotEmpty)
@@ -322,6 +348,8 @@ class _MainPageState extends State<MainPage> {
                   const SizedBox(height: 20),
                 ],
               ],
+                ),
+              ),
             ),
           ),
         ),
