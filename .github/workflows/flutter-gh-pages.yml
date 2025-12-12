@@ -1,0 +1,60 @@
+name: Build and Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            Frontend/flutter_easyeats/.dart_tool
+            ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('Frontend/flutter_easyeats/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Get Flutter dependencies
+        run: |
+          cd Frontend/flutter_easyeats
+          flutter pub get
+
+      - name: Set REPO_NAME env (repo base path for Pages)
+        run: |
+          echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
+
+      - name: Build Flutter web (release)
+        run: |
+          cd Frontend/flutter_easyeats
+          # If this is a user/organization site (username.github.io) we want base-href '/'
+          REPO_NAME="${{ env.REPO_NAME }}"
+          if [ "$REPO_NAME" = "${{ github.repository_owner }}.github.io" ]; then
+            flutter build web --release --base-href "/"
+          else
+            flutter build web --release --base-href "/${REPO_NAME}/"
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: Frontend/flutter_easyeats/build/web
+          publish_branch: gh-pages
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
