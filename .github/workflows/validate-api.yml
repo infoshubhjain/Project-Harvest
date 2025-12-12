@@ -1,0 +1,50 @@
+name: Validate API JSON and Repair
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd Backend/scrapers
+          pip install -r requirements.txt
+          cd ../..
+
+      - name: Run JSON validator
+        run: |
+          python3 Backend/scripts/validate_docs_api.py
+        continue-on-error: true
+
+      - name: If invalid, run quick scraper and export
+        if: always()
+        run: |
+          VALID=$?
+          if [ "$VALID" -ne 0 ]; then
+            echo "Invalid JSON detected: triggering quick scraper to refresh data"
+            cd Backend/scrapers
+            python3 nutrition_scraper.py --testing --headless
+            cd ..
+            python3 export_to_json.py
+            cd ..
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add Docs/api/
+            git diff --staged --quiet || git commit -m "🤖 Auto-fix: refreshed API JSON files via quick scraper - $(date +'%Y-%m-%d %H:%M')"
+            git push
+          else
+            echo "JSON valid"
+          fi

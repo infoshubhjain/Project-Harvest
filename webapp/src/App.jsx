@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 
 const API_BASE = 'https://infoshubhjain.github.io/Project-Harvest/api'
 
-// Real UIUC dining hall images
+// Use repository images hosted on GitHub raw to ensure availability
+const BASE_IMAGES_URL = 'https://infoshubhjain.github.io/Project-Harvest/images'
 const DINING_HALL_IMAGES = {
-  'ISR': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/ISR/ISR-Dining-03.ashx',
-  'Ikenberry Dining Center': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/Ikenberry/Ikenberry-Dining-01.ashx',
-  'LAR': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/LAR/LAR-Dining-02.ashx',
-  'PAR': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/PAR/PAR-Dining-01.ashx'
+  'ISR': `${BASE_IMAGES_URL}/ISR.jpg`,
+  'Ikenberry Dining Center': `${BASE_IMAGES_URL}/Ikenberry.jpg`,
+  'LAR': `${BASE_IMAGES_URL}/Allen.jpg`,
+  'PAR': `${BASE_IMAGES_URL}/PAR.webp`
 }
 
 const DINING_HALL_INFO = {
@@ -25,6 +26,7 @@ function App() {
   const [selectedMealType, setSelectedMealType] = useState('All')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [imageFallbacks, setImageFallbacks] = useState({})
 
   useEffect(() => {
     loadDiningHalls()
@@ -235,21 +237,25 @@ function App() {
           <p className="subtitle">Select a dining hall to view today's menu and nutrition information</p>
         </div>
 
-        <div className="dining-halls-grid">
-          {diningHalls.map((hall) => (
+            <div className="dining-halls-grid">
+                {diningHalls.map((hall) => (
             <div
               key={hall}
               className="dining-hall-card"
               onClick={() => setSelectedHall(hall)}
             >
-              <div
-                className="dining-hall-image"
-                style={{
-                  backgroundImage: `url(${DINING_HALL_IMAGES[hall]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              >
+              <div className="dining-hall-image">
+                <img
+                  src={DINING_HALL_IMAGES[hall]}
+                  alt={hall}
+                  onError={(e) => { e.target.onerror = null; e.target.src = `${BASE_IMAGES_URL}/Logo.png`; setImageFallbacks(prev => ({...prev, [hall]: true})); }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                {imageFallbacks[hall] && (
+                  <div style={{ position: 'absolute', left: 8, top: 8, backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 6px', borderRadius: 4, fontSize: 12 }}>
+                    Using fallback image
+                  </div>
+                )}
                 <div className="image-overlay"></div>
               </div>
               <div className="dining-hall-content">

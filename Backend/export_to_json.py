@@ -3,10 +3,11 @@ import sqlite3
 import json
 import os
 from pathlib import Path
+from datetime import datetime
 
 # Paths
 db_path = Path(__file__).parent / 'data' / 'nutrition_data.db'
-output_dir = Path(__file__).parent.parent / 'docs' / 'api'
+output_dir = Path(__file__).parent.parent / 'Docs' / 'api'
 
 # Create output directory
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -23,7 +24,7 @@ cursor.execute('SELECT DISTINCT dining_hall FROM nutrition_data ORDER BY dining_
 halls = [row['dining_hall'] for row in cursor.fetchall()]
 
 with open(output_dir / 'dining-halls.json', 'w') as f:
-    json.dump({'dining_halls': halls, 'count': len(halls)}, f, indent=2)
+    json.dump({'dining_halls': halls, 'count': len(halls), 'last_updated': datetime.now().isoformat()}, f, indent=2)
 print(f'✓ Exported {len(halls)} dining halls')
 
 # Export foods for each dining hall
@@ -46,7 +47,7 @@ for hall in halls:
         'dining_hall': hall,
         'foods': foods,
         'count': len(foods),
-        'last_updated': None  # Will be set when exported
+        'last_updated': datetime.now().isoformat()  # Set at export time
     }
 
     with open(output_dir / filename, 'w') as f:
@@ -58,7 +59,7 @@ cursor.execute('SELECT DISTINCT meal_type, date FROM nutrition_data ORDER BY dat
 meals = [dict(row) for row in cursor.fetchall()]
 
 with open(output_dir / 'available-meals.json', 'w') as f:
-    json.dump({'meals': meals, 'count': len(meals)}, f, indent=2)
+    json.dump({'meals': meals, 'count': len(meals), 'last_updated': datetime.now().isoformat()}, f, indent=2)
 print(f'✓ Exported {len(meals)} available meal times')
 
 conn.close()

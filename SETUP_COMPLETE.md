@@ -61,6 +61,11 @@ Your Project Harvest app now runs **100% from GitHub** with no external services
 - ✅ Menu items display with nutrition info
 - ✅ Responsive design looks great on desktop/mobile
 
+## 🔧 Notes on Scraper & Image Fixes
+
+- The scraper (`Backend/scrapers/nutrition_scraper.py`) now uses `webdriver-manager` to automatically download a compatible ChromeDriver and includes a helper `check_scraper_setup.py` to validate driver & selectors.
+- The React webapp (`webapp/src/App.jsx`) now references dining hall images hosted in the repo and includes a fallback image (repo Logo) to prevent broken/missing images due to remote hosting issues.
+
 ---
 
 ## 📊 What You Have Now
@@ -118,7 +123,7 @@ To get actual dining hall data:
 cd Backend/scrapers
 
 # Install dependencies (one-time)
-pip install selenium beautifulsoup4 pandas openpyxl
+pip install selenium beautifulsoup4 pandas openpyxl webdriver-manager
 brew install chromedriver
 
 # Run scraper (takes 30-60 minutes)
@@ -208,6 +213,17 @@ Project-Harvest/
 1. ✅ **Wait 2-3 minutes** for deployment to complete
 2. ✅ **Test your app** at https://infoshubhjain.github.io/Project-Harvest/
 3. ✅ **Verify menus load** in the Dining Halls section
+
+---
+
+## ✅ Wrap Up (Final Updates)
+
+I exported the latest SQLite data to JSON and copied dining hall images to `Docs/images` so GitHub Pages serves them directly.
+
+- `Backend/export_to_json.py` wrote up-to-date JSON files under `Docs/api` with `last_updated` timestamps.
+- `Backend/scripts/copy_images_to_docs.py` copies images into `Docs/images` so frontends use reliable static assets.
+
+If you'd like, I can now create a small PR with the updated `Docs/api/` JSON and `Docs/images/` assets so your GitHub Pages site is published immediately.
 
 ### Soon:
 1. Run the real scraper to get actual UIUC dining data

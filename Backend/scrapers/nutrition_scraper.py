@@ -2,59 +2,190 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import time
+import os
+
+def retry_on_exception(max_attempts=3, backoff=2):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return func(self, *args, **kwargs)
+                except Exception as e:
+                    print(f"Attempt {attempt}/{max_attempts} for {func.__name__} failed: {e}")
+                    if attempt == max_attempts:
+                        task = {'func': func.__name__, 'args': args, 'kwargs': kwargs}
+                        if hasattr(self, 'missed_tasks'):
+                            self.missed_tasks.append(task)
+                            print(f"Queued missed task: {func.__name__}")
+                        raise
+                    time.sleep(backoff * attempt)
+        return wrapper
+    return decorator
+
+from functools import wraps
 from bs4 import BeautifulSoup
 import pandas as pd
 from datetime import datetime, timedelta
 import json
 import re
+from functools import wraps
 
 class NutritionScraperComplete:
-    def __init__(self, testing_mode=False):
+    def __init__(self, testing_mode=False, headless=True, playback_mode=False):
         """Initialize the scraper with Chrome options
         
         Args:
             testing_mode (bool): If True, limits scraping for faster testing
         """
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
+        if headless:
+            options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-blink-features=AutomationControlled')
         options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        # Recommended for headless Chrome stability
+        options.add_argument('--disable-gpu')
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_experimental_option('excludeSwitches', ['enable-automation'])
         
-        self.driver = webdriver.Chrome(options=options)
-        self.wait = WebDriverWait(self.driver, 15)
+        # Initialize webdriver only if not in playback mode
+        self.playback_mode = playback_mode
+        if not self.playback_mode:
+            try:
+                # Use webdriver-manager to install and manage the correct ChromeDriver
+                service = Service(ChromeDriverManager().install())
+                self.driver = webdriver.Chrome(service=service, options=options)
+            except WebDriverException as e:
+                # Helpful error message for easier debugging
+                print("Error initializing Chrome driver:", str(e))
+                print("Make sure you have a compatible Chrome/Chromium installed or set CHROME_DRIVER_PATH environment variable.")
+                raise
+            self.wait = WebDriverWait(self.driver, 15)
+        else:
+            self.driver = None
+            self.wait = None
         self.base_url = "https://eatsmart.housing.illinois.edu"
         self.testing_mode = testing_mode
+        self.headless = headless
         self.max_items_per_meal = 5 if testing_mode else None
+        self.missed_tasks = []  # queue for tasks that fail and need re-try
+        self.debug_dir = os.path.join(os.path.dirname(__file__), 'debug_fragments')
+        os.makedirs(self.debug_dir, exist_ok=True)
+        self.snapshots_dir = os.path.join(os.path.dirname(__file__), 'snapshots')
+        os.makedirs(self.snapshots_dir, exist_ok=True)
+        # If not already set, keep the playback_mode set from parameter
+        self.playback_mode = getattr(self, 'playback_mode', False)
+        self.save_snapshots = False
+        self._retry_attempts = 3
+        self._retry_backoff = 2  # seconds base
+
+    def _retry_on_exception(self, max_attempts=None, backoff=None):
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                attempts = max_attempts or self._retry_attempts
+                sleep_base = backoff or self._retry_backoff
+                for attempt in range(1, attempts + 1):
+                    try:
+                        return func(*args, **kwargs)
+                    except Exception as e:
+                        print(f"Attempt {attempt}/{attempts} for {func.__name__} failed: {e}")
+                        if attempt == attempts:
+                            # Push to missed_tasks for later retry if context available
+                            try:
+                                task = {'func': func.__name__, 'args': args, 'kwargs': kwargs}
+                                if hasattr(self, 'missed_tasks'):
+                                    self.missed_tasks.append(task)
+                                    print(f"Queued missed task: {func.__name__}")
+                            except Exception:
+                                pass
+                            raise
+                        time.sleep(sleep_base * attempt)
+            return wrapper
+        return decorator
 
     def scrape_dining_structure(self):
         """Scrape all dining halls and their services from the dropdown menu"""
         try:
             print("Loading main page to extract dining hall structure...")
-            self.driver.get(self.base_url + "/NetNutrition/1")
-            time.sleep(4)
+            # If playback mode is enabled, do not navigate with the driver
+            if not getattr(self, 'playback_mode', False):
+                self.driver.get(self.base_url + "/NetNutrition/1")
+                time.sleep(4)
             
             print("Extracting dining halls and services from navigation dropdown...")
             
-            dropdown = self.driver.find_element(By.ID, "nav-unit-selector")
-            dropdown_items = dropdown.find_elements(By.CSS_SELECTOR, ".dropdown-item")
+            # If playback mode is enabled, parse a snapshot instead of live page
+            if getattr(self, 'playback_mode', False) and os.path.isdir(self.snapshots_dir):
+                # Use the first HTML snapshot found to parse structure
+                snapshots = [p for p in os.listdir(self.snapshots_dir) if p.endswith('.html')]
+                if not snapshots:
+                    print('Playback mode enabled but no snapshot files found')
+                else:
+                    path = os.path.join(self.snapshots_dir, snapshots[0])
+                    print('Parsing playback snapshot:', path)
+                    with open(path, 'r', encoding='utf-8') as f:
+                        soup = BeautifulSoup(f.read(), 'html.parser')
+                        anchors = soup.select('a[data-unitoid]')
+                        dropdown_items = anchors
+                        print(f'  → Found {len(anchors)} anchors in snapshot')
+                        # fall through to parsing logic below using BS anchors
+
+            # Try the common ID first, fallback to generic selectors if needed
+            # Only attempt driver-based element searches if not in playback_mode
+            if not getattr(self, 'playback_mode', False):
+                dropdown_items = []
+                try:
+                    dropdown = self.driver.find_element(By.ID, "nav-unit-selector")
+                    dropdown_items = dropdown.find_elements(By.CSS_SELECTOR, ".dropdown-item")
+                except Exception:
+                    # Fallback: try to find other menu selectors that include data-unitoid or unit links
+                    try:
+                        # Find all links with data-unitoid attribute
+                        dropdown_items = self.driver.find_elements(By.CSS_SELECTOR, "a[data-unitoid]")
+                    except Exception:
+                        # As a last resort, try to find any link that looks like a unit link
+                        dropdown_items = self.driver.find_elements(By.CSS_SELECTOR, "a[href*='NetNutrition']")
             
             dining_halls = []
             current_hall = None
             
-            for item in dropdown_items:
+            # Loop through the dropdown items. During testing/playback we may print detailed info.
+            for idx, item in enumerate(dropdown_items):
                 try:
-                    link = item.find_element(By.TAG_NAME, "a")
-                    name = link.get_attribute('title') or link.text.strip()
-                    unit_id = link.get_attribute('data-unitoid')
+                    # Support both Selenium elements and bs4 Tags (playback mode)
+                    # Use isinstance check to differentiate bs4 Tag vs Selenium WebElement
+                    from bs4.element import Tag as BS4Tag
+                    if isinstance(item, BS4Tag):
+                        # bs4 element
+                        link = item
+                        name = link.get('title') or link.get_text().strip()
+                        unit_id = link.get('data-unitoid') or link.get('data-unitid')
+                        link_class = ' '.join(link.get('class', [])) if link.get('class') else ''
+                    elif hasattr(item, 'get_attribute'):
+                        # Selenium WebElement
+                        link = item
+                        if link.tag_name.lower() != 'a':
+                            try:
+                                link = item.find_element(By.TAG_NAME, 'a')
+                            except Exception:
+                                continue
+                        name = link.get_attribute('title') or link.text.strip()
+                        unit_id = link.get_attribute('data-unitoid') or link.get_attribute('data-unitid')
+                        link_class = (link.get_attribute('class') or '')
                     
                     if not name or not unit_id or unit_id == '-1':
                         continue
                     
-                    is_primary = 'text-primary' in link.get_attribute('class')
+                    is_primary = 'text-primary' in link_class or 'primary' in link_class
+                    if getattr(self, 'playback_mode', False) and getattr(self, 'testing_mode', False):
+                        print(f"Playback parsing: name='{name}', unit_id='{unit_id}', link_class='{link_class}', is_primary={is_primary}")
                     
                     if is_primary:
                         if current_hall and current_hall['dining_services']:
@@ -74,6 +205,14 @@ class NutritionScraperComplete:
                             current_hall['dining_services'].append(service)
                 
                 except Exception as e:
+                    # Debugging output: save snapshot of page if available and show error
+                    if getattr(self, 'testing_mode', False):
+                        print(f"Exception parsing dropdown item: {e} (item repr={repr(item)[:160]})")
+                        import traceback
+                        traceback.print_exc()
+                    self._save_debug_fragment('scrape_dining_structure', str(e))
+                    if getattr(self, 'save_snapshots', False):
+                        self._save_snapshot(f"scrape_dining_structure_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
                     continue
             
             if current_hall and current_hall['dining_services']:
@@ -85,6 +224,7 @@ class NutritionScraperComplete:
             print(f"Error scraping dining structure: {str(e)}")
             return []
     
+    @retry_on_exception(max_attempts=3, backoff=3)
     def navigate_to_service(self, unit_id, service_name):
         """Navigate to a specific dining service"""
         try:
@@ -106,17 +246,29 @@ class NutritionScraperComplete:
             return True
             
         except Exception as e:
-            print(f"Error: {str(e)}")
+            print(f"Error navigating to service {service_name} ({unit_id}): {str(e)}")
+            self._save_debug_fragment(f"navigate_{service_name}_{unit_id}", str(e))
+            self._append_debug_log(f"navigate_to_service failed for {service_name} ({unit_id}): {e}")
+            if getattr(self, 'save_snapshots', False):
+                self._save_snapshot(f"navigate_{service_name}_{unit_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
             return False
 
+    @retry_on_exception(max_attempts=3, backoff=2)
     def get_available_dates_for_next_n_days(self, n_days=7):
         """Get available dates from the date selector dropdown for the next n days (including today)"""
         try:
             print(f"\nGetting available dates for next {n_days} days...")
 
-            # Find the date selector dropdown
-            date_selector = self.driver.find_element(By.ID, "nav-date-selector")
-            date_items = date_selector.find_elements(By.CSS_SELECTOR, "a.dropdown-item")
+            # Find the date selector dropdown; fallback to any links with data-date
+            date_items = []
+            try:
+                date_selector = self.driver.find_element(By.ID, "nav-date-selector")
+                date_items = date_selector.find_elements(By.CSS_SELECTOR, "a.dropdown-item")
+            except Exception:
+                try:
+                    date_items = self.driver.find_elements(By.CSS_SELECTOR, "a[data-date]")
+                except Exception:
+                    date_items = []
 
             # Get today's date
             today = datetime.now().date()
@@ -176,6 +328,7 @@ class NutritionScraperComplete:
             traceback.print_exc()
             return []
 
+    @retry_on_exception(max_attempts=3, backoff=2)
     def select_date(self, date_element):
         """Select a specific date from the dropdown"""
         try:
@@ -189,18 +342,30 @@ class NutritionScraperComplete:
             return True
         except Exception as e:
             print(f"Error selecting date: {str(e)}")
+            self._save_debug_fragment(f"select_date", str(e))
+            self._append_debug_log(f"select_date failed: {e}")
+            if getattr(self, 'save_snapshots', False):
+                self._save_snapshot(f"select_date_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
             return False
 
+    @retry_on_exception(max_attempts=3, backoff=2)
     def get_all_meals_structured(self):
         """Get all available meals organized by date and meal period"""
         try:
             print("Extracting meal structure...")
             time.sleep(3)
 
-            results_panel = self.driver.find_element(By.ID, "navBarResults")
-
-            # Get all menu items (the clickable li elements with date/meal info)
-            menu_items = results_panel.find_elements(By.CSS_SELECTOR, "li.list-group-item")
+            results_panel = None
+            menu_items = []
+            try:
+                results_panel = self.driver.find_element(By.ID, "navBarResults")
+                menu_items = results_panel.find_elements(By.CSS_SELECTOR, "li.list-group-item")
+            except Exception:
+                # Fallback to any clickable items that look like menu items
+                try:
+                    menu_items = self.driver.find_elements(By.CSS_SELECTOR, "li[data-date], a.cbo_nn_itemHover, tr.cbo_nn_itemGroupRow")
+                except Exception:
+                    menu_items = []
             print(f"Found {len(menu_items)} menu items")
 
             structured_meals = []
@@ -252,6 +417,10 @@ class NutritionScraperComplete:
 
                 except Exception as e:
                     print(f"  Error processing menu item: {str(e)}")
+                    self._save_debug_fragment('get_all_meals_structured', str(e))
+                    self._append_debug_log(f"get_all_meals_structured error: {e}")
+                    if getattr(self, 'save_snapshots', False):
+                        self._save_snapshot(f"get_all_meals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
                     continue
 
             print(f"\nStructured {len(structured_meals)} meal periods")
@@ -264,6 +433,7 @@ class NutritionScraperComplete:
             traceback.print_exc()
             return []
     
+    @retry_on_exception(max_attempts=3, backoff=2)
     def click_meal(self, meal_element):
         """Click on a specific meal to load its items"""
         try:
@@ -292,6 +462,10 @@ class NutritionScraperComplete:
             return True
         except Exception as e:
             print(f"Error clicking meal: {str(e)}")
+            self._save_debug_fragment('click_meal', str(e))
+            self._append_debug_log(f"click_meal failed: {e}")
+            if getattr(self, 'save_snapshots', False):
+                self._save_snapshot(f"click_meal_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
             return False
     
     def extract_category_map(self):
@@ -342,6 +516,7 @@ class NutritionScraperComplete:
             print(f"     Error extracting categories: {str(e)}")
             return {}
 
+    @retry_on_exception(max_attempts=3, backoff=2)
     def extract_nutrition_info(self, max_items=None):
         """Extract nutrition information for each menu item by clicking on them"""
         try:
@@ -430,7 +605,11 @@ class NutritionScraperComplete:
                     # No sleep needed after close, we just move to next item
 
                 except Exception as e:
-                    print(f"    ERROR: {str(e)}")
+                    print(f"    ERROR extracting item: {str(e)}")
+                    self._save_debug_fragment(f"extract_item_{i}", str(e))
+                    self._append_debug_log(f"extract_item_{i} failed: {e}")
+                    if getattr(self, 'save_snapshots', False):
+                        self._save_snapshot(f"extract_item_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html")
                     continue
 
             print(f"\n✓ Extracted nutrition info for {len(items_data)} items")
@@ -467,6 +646,7 @@ class NutritionScraperComplete:
                 
         except Exception as e:
             print(f"     Error closing modal: {str(e)}")
+            self._save_debug_fragment('close_modal', str(e))
     
     def extract_nutrition_from_modal(self, food_name):
         """Extract nutrition information from the modal"""
@@ -535,6 +715,7 @@ class NutritionScraperComplete:
             
         except Exception as e:
             print(f"       ERROR extracting nutrition: {str(e)}")
+            self._save_debug_fragment(f"extract_nutrition_{food_name}", str(e))
         
         return nutrition_info
     
@@ -601,6 +782,46 @@ class NutritionScraperComplete:
         except Exception:
             # If parsing fails, return "0"
             return "0"
+
+    def _save_debug_fragment(self, name, reason=None):
+        try:
+            ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"{ts}_{name}.html"
+            path = os.path.join(self.debug_dir, filename)
+            content = self.driver.page_source if (hasattr(self, 'driver') and self.driver is not None) else '<no driver>'
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write("<!-- Reason: %s -->\n" % (reason or ''))
+                f.write(content)
+            print(f"Saved debug fragment: {path}")
+            try:
+                self._append_debug_log(f"Saved debug fragment: {path}")
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"Failed to save debug fragment: {e}")
+
+    def _append_debug_log(self, message):
+        try:
+            logpath = os.path.join(self.debug_dir, 'debug.log')
+            with open(logpath, 'a', encoding='utf-8') as f:
+                f.write(f"{datetime.now().isoformat()} - {message}\n")
+        except Exception as e:
+            print(f"Failed to append debug log: {e}")
+
+    def _save_snapshot(self, filename=None):
+        try:
+            if not getattr(self, 'save_snapshots', False):
+                return None
+            if not filename:
+                filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            path = os.path.join(self.snapshots_dir, filename)
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(self.driver.page_source if (hasattr(self, 'driver') and self.driver is not None) else '')
+            print(f"Saved snapshot: {path}")
+            return path
+        except Exception as e:
+            print(f"Failed to save snapshot: {e}")
+            return None
 
     def extract_nutrition_value(self, line, keyword):
         """Extract nutrition value from a line and parse it to standardized format"""
@@ -803,6 +1024,25 @@ class NutritionScraperComplete:
         print(f"{'='*80}")
         print(f"Total items scraped: {len(all_results)}")
 
+        # Attempt to process any missed tasks queued by retry decorator
+        if self.missed_tasks:
+            print(f"Found {len(self.missed_tasks)} missed tasks. Attempting re-tries...")
+            tasks_copy = list(self.missed_tasks)
+            self.missed_tasks = []
+            for task in tasks_copy:
+                try:
+                    func_name = task.get('func')
+                    args = task.get('args', ())
+                    kwargs = task.get('kwargs', {})
+                    print(f"Re-running missed task: {func_name}")
+                    method = getattr(self, func_name, None)
+                    if method:
+                        result = method(*args, **kwargs)
+                        print(f"  Result: {result}")
+                except Exception as e:
+                    print(f"Re-run of missed task {func_name} failed: {e}")
+            print("Finished missed tasks re-run")
+
         return all_results
     
     def export_to_excel(self, all_results, filename=None):
@@ -892,13 +1132,32 @@ class NutritionScraperComplete:
 
 
 if __name__ == "__main__":
-    # Set testing_mode=False for full scraping
-    TESTING_MODE = False
+    # Command line args: testing mode, headless toggle
+    import argparse
+
+    parser = argparse.ArgumentParser(description='UIUC Dining Nutrition Scraper')
+    parser.add_argument('--testing', action='store_true', help='Enable testing mode (limits items/days)')
+    parser.add_argument('--headless', action='store_true', help='Run Chrome in headless mode (default)')
+    parser.add_argument('--no-headless', dest='headless', action='store_false', help='Run Chrome with UI (for debugging)')
+    parser.add_argument('--save-snapshots', action='store_true', help='Save page snapshots for debugging when selectors fail')
+    parser.add_argument('--playback', type=str, help='Playback mode: provide a directory of HTML snapshots to use instead of live scraping')
+    parser.set_defaults(headless=True)
+    args = parser.parse_args()
+
+    TESTING_MODE = args.testing
+    HEADLESS_MODE = args.headless
+    SAVE_SNAPSHOTS = args.save_snapshots
+    PLAYBACK_DIR = args.playback
 
     # Number of days to scrape (including today)
     DAYS_TO_SCRAPE = 7
 
-    scraper = NutritionScraperComplete(testing_mode=TESTING_MODE)
+    scraper = NutritionScraperComplete(testing_mode=TESTING_MODE, headless=HEADLESS_MODE)
+    if SAVE_SNAPSHOTS:
+        scraper.save_snapshots = True
+    if PLAYBACK_DIR:
+        scraper.playback_mode = True
+        scraper.snapshots_dir = PLAYBACK_DIR
 
     try:
         print("\n" + "="*80)

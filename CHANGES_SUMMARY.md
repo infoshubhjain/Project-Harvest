@@ -57,6 +57,14 @@
 - `Frontend/flutter_easyeats/lib/pages/dining_halls.dart` - Responsive design
 - `Frontend/flutter_easyeats/lib/services/auth_service.dart` - Use API config
 - `Frontend/flutter_easyeats/lib/services/nutrition_service.dart` - Use API config
+
+### Recent Fixes (scrapers & images)
+
+ - `Backend/scrapers/tests/*` - Added playback/selector tests and a sample snapshot
+ - `.github/workflows/validate-api.yml` - Validates JSON API and triggers a quick scraper run on failure
+ - `.github/workflows/scraper-tests.yml` - Runs playback/selector tests on PRs/pushes
+ - `Backend/scripts/validate_docs_api.py` - Utility to validate API JSON files
+ - `Backend/scripts/copy_images_to_docs.py` - Copies Flutter images to `Docs/images` for GH Pages hosting
 - `Frontend/flutter_easyeats/pubspec.yaml` - Updated package name and description
 
 ## Current State

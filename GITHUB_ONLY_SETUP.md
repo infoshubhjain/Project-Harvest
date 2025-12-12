@@ -28,7 +28,7 @@ First, we need dining hall data:
 
 ```bash
 cd Backend/scrapers
-pip install selenium beautifulsoup4 pandas openpyxl
+ pip install selenium beautifulsoup4 pandas openpyxl webdriver-manager
 
 # Install ChromeDriver (Mac)
 brew install chromedriver

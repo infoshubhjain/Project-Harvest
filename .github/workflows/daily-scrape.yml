@@ -5,6 +5,15 @@ on:
     # Run at 1:00 AM UTC daily (adjust timezone as needed)
     - cron: '0 1 * * *'
   workflow_dispatch: # Allow manual trigger
+    inputs:
+      testing:
+        description: 'Enable testing mode to run a limited, fast scrape'
+        required: false
+        default: 'false'
+      save_snapshots:
+        description: 'Save HTML snapshots for debugging when selectors fail'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -12,6 +21,9 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    concurrency:
+      group: daily-scrape-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - name: Checkout repository
@@ -25,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd Backend/scrapers
-          pip install selenium beautifulsoup4 pandas openpyxl
+          pip install -r requirements.txt
 
       - name: Install Chrome and ChromeDriver
         run: |
@@ -36,14 +48,46 @@ jobs:
         run: |
           cd Backend/scrapers
           export PATH=$PATH:/usr/lib/chromium-browser/
-          python3 nutrition_scraper.py
+          # Mask inputs and default to full scrape
+          TESTING=''
+          if [ "${{ github.event.inputs.testing }}" = 'true' ]; then
+            TESTING='--testing'
+          fi
+          SAVESNAP=''
+          if [ "${{ github.event.inputs.save_snapshots }}" = 'true' ]; then
+            SAVESNAP='--save-snapshots'
+          fi
+          python3 nutrition_scraper.py $TESTING $SAVESNAP
         timeout-minutes: 60
+
+      - name: Export JSON API files
+        run: |
+          cd Backend
+          python3 export_to_json.py
+
+      - name: Copy images to Docs
+        run: |
+          cd Backend/scripts
+          python3 copy_images_to_docs.py
+          cd ../..
+
+
+      # (Duplicate step removed; export already run above)
+
+      - name: Commit and push exported JSON and DB
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Docs/api/ Backend/data/nutrition_data.db Backend/data/archives/
+          git diff --staged --quiet || git commit -m "🤖 Auto-update dining hall data & API - $(date +'%Y-%m-%d %H:%M')"
+          git push
+        continue-on-error: true
 
       - name: Commit and push scraped data
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add Backend/data/nutrition_data.db Backend/data/archives/
+          git add Backend/data/nutrition_data.db Backend/data/archives/ Docs/api/ Docs/images/
           git diff --staged --quiet || git commit -m "🤖 Auto-update dining hall data - $(date +'%Y-%m-%d %H:%M')"
           git push
         continue-on-error: true

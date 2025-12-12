@@ -1,0 +1,33 @@
+name: Scraper Setup Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd Backend/scrapers
+          pip install -r requirements.txt
+
+      - name: Install Chrome and ChromeDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+
+      - name: Run setup check
+        run: |
+          cd Backend/scrapers
+          export PATH=$PATH:/usr/lib/chromium-browser/
+          python3 check_scraper_setup.py --no-headless
+        timeout-minutes: 10

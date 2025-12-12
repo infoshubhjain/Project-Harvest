@@ -88,6 +88,10 @@ The scraper is configured to run daily at 1:00 AM UTC via GitHub Actions.
 - Scraper code: [Backend/scrapers/nutrition_scraper.py](Backend/scrapers/nutrition_scraper.py)
 - Data storage: [Backend/data/nutrition_data.db](Backend/data/nutrition_data.db)
 
+### Validation and Tests
+ - A dedicated action `.github/workflows/validate-api.yml` runs on push and PR and validates that `Docs/api/*.json` are non-empty and valid JSON; it will run a quick test scrape + export when validation fails and commit updates.
+ - The scraper includes a `playback` mode and a small test suite under `Backend/scrapers/tests/` which validates selector logic with local HTML snapshots. Use `pytest` to run these tests.
+
 ## Local Development
 
 ### Backend (Node.js)
@@ -120,10 +124,12 @@ flutter build web
 cd Backend/scrapers
 
 # Install dependencies
-pip install selenium beautifulsoup4 pandas openpyxl
+pip install selenium beautifulsoup4 pandas openpyxl webdriver-manager
 
 # Install ChromeDriver (Mac)
-brew install chromedriver
+# NOTE: This project uses webdriver-manager to automatically download a compatible ChromeDriver.
+# You can still install ChromeDriver via Homebrew if you prefer:
+# brew install chromedriver
 
 # Run scraper
 python3 nutrition_scraper.py
