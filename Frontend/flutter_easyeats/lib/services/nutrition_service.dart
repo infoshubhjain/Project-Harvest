@@ -4,6 +4,8 @@ import '../models/food_item.dart';
 import '../models/meal_entry.dart';
 import '../config/api_config.dart';
 
+// Note: NutritionTotals is defined in meal_entry.dart
+
 class NutritionService {
   static String get baseUrl => ApiConfig.apiBaseUrl;
 
