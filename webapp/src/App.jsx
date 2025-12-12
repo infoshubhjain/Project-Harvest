@@ -2,6 +2,21 @@ import { useState, useEffect } from 'react'
 
 const API_BASE = 'https://infoshubhjain.github.io/Project-Harvest/api'
 
+// Real UIUC dining hall images
+const DINING_HALL_IMAGES = {
+  'ISR': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/ISR/ISR-Dining-03.ashx',
+  'Ikenberry Dining Center': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/Ikenberry/Ikenberry-Dining-01.ashx',
+  'LAR': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/LAR/LAR-Dining-02.ashx',
+  'PAR': 'https://housing.illinois.edu/~/media/Images/Housing/Dining/DiningHalls/PAR/PAR-Dining-01.ashx'
+}
+
+const DINING_HALL_INFO = {
+  'ISR': 'Illinois Street Residence Hall - Main dining room with diverse menu options',
+  'Ikenberry Dining Center': 'Largest dining hall on campus with multiple stations',
+  'LAR': 'Lincoln Avenue Residence - Comfortable atmosphere with quality meals',
+  'PAR': 'Pennsylvania Avenue Residence - Fresh ingredients and healthy choices'
+}
+
 function App() {
   const [diningHalls, setDiningHalls] = useState([])
   const [selectedHall, setSelectedHall] = useState(null)
@@ -71,11 +86,19 @@ function App() {
     return (
       <div>
         <div className="header">
-          <h1>🌾 Project Harvest</h1>
-          <p>University Dining Nutrition Tracker</p>
+          <div className="header-content">
+            <div className="logo">🌾</div>
+            <div>
+              <h1>Project Harvest</h1>
+              <p>University of Illinois Dining Nutrition Tracker</p>
+            </div>
+          </div>
         </div>
         <div className="container">
-          <div className="loading">Loading dining halls...</div>
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Loading dining halls...</p>
+          </div>
         </div>
       </div>
     )
@@ -85,13 +108,21 @@ function App() {
     return (
       <div>
         <div className="header">
-          <h1>🌾 Project Harvest</h1>
-          <p>University Dining Nutrition Tracker</p>
+          <div className="header-content">
+            <div className="logo">🌾</div>
+            <div>
+              <h1>Project Harvest</h1>
+              <p>University of Illinois Dining Nutrition Tracker</p>
+            </div>
+          </div>
         </div>
         <div className="container">
           <div className="error">
-            <h2>Error</h2>
+            <h2>⚠️ Error Loading Data</h2>
             <p>{error}</p>
+            <button className="retry-button" onClick={loadDiningHalls}>
+              Try Again
+            </button>
           </div>
         </div>
       </div>
@@ -102,16 +133,24 @@ function App() {
     return (
       <div>
         <div className="header">
-          <h1>🌾 Project Harvest</h1>
-          <p>{selectedHall}</p>
+          <div className="header-content">
+            <div className="logo">🌾</div>
+            <div>
+              <h1>Project Harvest</h1>
+              <p>{selectedHall}</p>
+            </div>
+          </div>
         </div>
         <div className="container">
           <button className="back-button" onClick={() => setSelectedHall(null)}>
-            ← Back to Dining Halls
+            <span>←</span> Back to Dining Halls
           </button>
 
           <div className="menu-section">
-            <h2 style={{ marginBottom: '20px', color: '#2d5016' }}>Menu</h2>
+            <div className="menu-header">
+              <h2>Today's Menu</h2>
+              <p className="menu-subtitle">{filteredItems.length} items available</p>
+            </div>
 
             <div className="menu-filters">
               {getMealTypes().map(type => (
@@ -120,50 +159,53 @@ function App() {
                   className={`filter-button ${selectedMealType === type ? 'active' : ''}`}
                   onClick={() => setSelectedMealType(type)}
                 >
+                  {type === 'All' && '🍽️ '}
+                  {type === 'Breakfast' && '🌅 '}
+                  {type === 'Lunch' && '☀️ '}
+                  {type === 'Dinner' && '🌙 '}
                   {type}
                 </button>
               ))}
             </div>
 
             {loading ? (
-              <div className="loading">Loading menu...</div>
+              <div className="loading">
+                <div className="spinner"></div>
+                <p>Loading menu...</p>
+              </div>
             ) : filteredItems.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#666', padding: '40px 0' }}>
-                No items found for this meal type.
-              </p>
+              <div className="empty-state">
+                <div className="empty-icon">🍽️</div>
+                <p>No items found for {selectedMealType === 'All' ? 'this dining hall' : selectedMealType}</p>
+              </div>
             ) : (
               <div className="menu-items">
                 {filteredItems.map((item, index) => (
                   <div key={index} className="menu-item">
-                    <div className="item-name">{item.name}</div>
-                    <div className="item-meta">
-                      <span>🍽️ {item.category || 'N/A'}</span>
-                      <span>📏 {item.serving_size || 'N/A'}</span>
+                    <div className="item-header">
+                      <div className="item-name">{item.name}</div>
+                      <div className="calories-badge">{item.calories || 0} cal</div>
                     </div>
-                    <div className="nutrition-info">
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Calories</span>
-                        <span className="nutrition-value">{item.calories || 0}</span>
-                      </div>
-                      <div className="nutrition-item">
+                    <div className="item-meta">
+                      <span className="meta-tag">🍽️ {item.category || 'N/A'}</span>
+                      <span className="meta-tag">📏 {item.serving_size || 'N/A'}</span>
+                    </div>
+                    <div className="nutrition-grid">
+                      <div className="nutrition-item protein">
                         <span className="nutrition-label">Protein</span>
                         <span className="nutrition-value">{item.protein || 0}g</span>
                       </div>
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Fat</span>
-                        <span className="nutrition-value">{item.total_fat || 0}g</span>
-                      </div>
-                      <div className="nutrition-item">
+                      <div className="nutrition-item carbs">
                         <span className="nutrition-label">Carbs</span>
                         <span className="nutrition-value">{item.total_carbohydrate || 0}g</span>
                       </div>
-                      <div className="nutrition-item">
+                      <div className="nutrition-item fat">
+                        <span className="nutrition-label">Fat</span>
+                        <span className="nutrition-value">{item.total_fat || 0}g</span>
+                      </div>
+                      <div className="nutrition-item fiber">
                         <span className="nutrition-label">Fiber</span>
                         <span className="nutrition-value">{item.dietary_fiber || 0}g</span>
-                      </div>
-                      <div className="nutrition-item">
-                        <span className="nutrition-label">Sugar</span>
-                        <span className="nutrition-value">{item.sugars || 0}g</span>
                       </div>
                     </div>
                   </div>
@@ -179,16 +221,19 @@ function App() {
   return (
     <div>
       <div className="header">
-        <h1>🌾 Project Harvest</h1>
-        <p>University Dining Nutrition Tracker</p>
+        <div className="header-content">
+          <div className="logo">🌾</div>
+          <div>
+            <h1>Project Harvest</h1>
+            <p>University of Illinois Dining Nutrition Tracker</p>
+          </div>
+        </div>
       </div>
       <div className="container">
-        <h2 style={{ marginTop: '20px', marginBottom: '10px', color: '#2d5016' }}>
-          Dining Halls
-        </h2>
-        <p style={{ color: '#666', marginBottom: '20px' }}>
-          Select a dining hall to view its menu and nutrition information
-        </p>
+        <div className="page-header">
+          <h2>Choose Your Dining Hall</h2>
+          <p className="subtitle">Select a dining hall to view today's menu and nutrition information</p>
+        </div>
 
         <div className="dining-halls-grid">
           {diningHalls.map((hall) => (
@@ -197,10 +242,22 @@ function App() {
               className="dining-hall-card"
               onClick={() => setSelectedHall(hall)}
             >
-              <div className="dining-hall-image"></div>
+              <div
+                className="dining-hall-image"
+                style={{
+                  backgroundImage: `url(${DINING_HALL_IMAGES[hall]})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              >
+                <div className="image-overlay"></div>
+              </div>
               <div className="dining-hall-content">
                 <h3 className="dining-hall-name">{hall}</h3>
-                <p className="dining-hall-info">Click to view menu →</p>
+                <p className="dining-hall-info">{DINING_HALL_INFO[hall]}</p>
+                <div className="view-menu-button">
+                  View Menu →
+                </div>
               </div>
             </div>
           ))}
