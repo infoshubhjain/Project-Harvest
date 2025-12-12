@@ -473,12 +473,17 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Authentication endpoints available at:`);
-    console.log(`  POST http://localhost:${PORT}/api/auth/register`);
-    console.log(`  POST http://localhost:${PORT}/api/auth/login`);
-    console.log(`  PUT  http://localhost:${PORT}/api/user/:userId/profile`);
-    console.log(`  GET  http://localhost:${PORT}/api/user/:userId/profile`);
-});
+// Start server (only when not in serverless environment)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+        console.log(`Authentication endpoints available at:`);
+        console.log(`  POST http://localhost:${PORT}/api/auth/register`);
+        console.log(`  POST http://localhost:${PORT}/api/auth/login`);
+        console.log(`  PUT  http://localhost:${PORT}/api/user/:userId/profile`);
+        console.log(`  GET  http://localhost:${PORT}/api/user/:userId/profile`);
+    });
+}
+
+// Export for serverless (Vercel)
+module.exports = app;
