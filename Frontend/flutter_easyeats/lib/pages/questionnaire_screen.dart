@@ -179,12 +179,14 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: (_currentPage + 1) / 5,
-                  backgroundColor: Colors.grey[200],
-                  color: Colors.green,
-                  minHeight: 8,
+                ClipRRect(
                   borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: (_currentPage + 1) / 5,
+                    backgroundColor: Colors.grey[200],
+                    color: Colors.green,
+                    minHeight: 8,
+                  ),
                 ),
               ],
             ),
