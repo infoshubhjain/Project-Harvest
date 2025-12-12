@@ -1,0 +1,91 @@
+{
+  "dining_hall": "Ikenberry Dining Center",
+  "foods": [
+    {
+      "name": "Breakfast Burrito",
+      "category": "Entrees",
+      "serving_size": "1 burrito",
+      "calories": 380.0,
+      "protein": 18.0,
+      "total_fat": 16.0,
+      "total_carbohydrate": 38.0,
+      "dietary_fiber": 4.0,
+      "sugars": 2.0,
+      "sodium": 720.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "French Toast",
+      "category": "Entrees",
+      "serving_size": "2 slices",
+      "calories": 280.0,
+      "protein": 8.0,
+      "total_fat": 8.0,
+      "total_carbohydrate": 44.0,
+      "dietary_fiber": 2.0,
+      "sugars": 12.0,
+      "sodium": 420.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Bacon Strips",
+      "category": "Sides",
+      "serving_size": "3 strips",
+      "calories": 130.0,
+      "protein": 9.0,
+      "total_fat": 10.0,
+      "total_carbohydrate": 0.0,
+      "dietary_fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 480.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Black Bean Burger",
+      "category": "Entrees",
+      "serving_size": "1 burger",
+      "calories": 240.0,
+      "protein": 12.0,
+      "total_fat": 6.0,
+      "total_carbohydrate": 35.0,
+      "dietary_fiber": 8.0,
+      "sugars": 4.0,
+      "sodium": 520.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Teriyaki Chicken Bowl",
+      "category": "Entrees",
+      "serving_size": "1 bowl",
+      "calories": 450.0,
+      "protein": 32.0,
+      "total_fat": 8.0,
+      "total_carbohydrate": 62.0,
+      "dietary_fiber": 3.0,
+      "sugars": 14.0,
+      "sodium": 890.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Coleslaw",
+      "category": "Sides",
+      "serving_size": "0.5 cup",
+      "calories": 90.0,
+      "protein": 1.0,
+      "total_fat": 5.0,
+      "total_carbohydrate": 11.0,
+      "dietary_fiber": 2.0,
+      "sugars": 8.0,
+      "sodium": 180.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    }
+  ],
+  "count": 6,
+  "last_updated": null
+}

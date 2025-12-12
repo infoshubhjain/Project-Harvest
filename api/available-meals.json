@@ -1,0 +1,17 @@
+{
+  "meals": [
+    {
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "2025-12-12"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    }
+  ],
+  "count": 3
+}

@@ -1,0 +1,91 @@
+{
+  "dining_hall": "PAR",
+  "foods": [
+    {
+      "name": "Belgian Waffles",
+      "category": "Entrees",
+      "serving_size": "2 waffles",
+      "calories": 340.0,
+      "protein": 8.0,
+      "total_fat": 10.0,
+      "total_carbohydrate": 54.0,
+      "dietary_fiber": 2.0,
+      "sugars": 10.0,
+      "sodium": 520.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Turkey Sausage",
+      "category": "Entrees",
+      "serving_size": "2 links",
+      "calories": 120.0,
+      "protein": 14.0,
+      "total_fat": 6.0,
+      "total_carbohydrate": 2.0,
+      "dietary_fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 480.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Fresh Fruit Salad",
+      "category": "Sides",
+      "serving_size": "1 cup",
+      "calories": 80.0,
+      "protein": 1.0,
+      "total_fat": 0.0,
+      "total_carbohydrate": 20.0,
+      "dietary_fiber": 3.0,
+      "sugars": 16.0,
+      "sodium": 5.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Turkey Burger",
+      "category": "Entrees",
+      "serving_size": "1 burger",
+      "calories": 290.0,
+      "protein": 28.0,
+      "total_fat": 12.0,
+      "total_carbohydrate": 22.0,
+      "dietary_fiber": 2.0,
+      "sugars": 3.0,
+      "sodium": 580.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Veggie Wrap",
+      "category": "Entrees",
+      "serving_size": "1 wrap",
+      "calories": 250.0,
+      "protein": 8.0,
+      "total_fat": 9.0,
+      "total_carbohydrate": 36.0,
+      "dietary_fiber": 6.0,
+      "sugars": 4.0,
+      "sodium": 520.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Sweet Potato Fries",
+      "category": "Sides",
+      "serving_size": "1 serving",
+      "calories": 180.0,
+      "protein": 2.0,
+      "total_fat": 7.0,
+      "total_carbohydrate": 28.0,
+      "dietary_fiber": 4.0,
+      "sugars": 8.0,
+      "sodium": 210.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    }
+  ],
+  "count": 6,
+  "last_updated": null
+}

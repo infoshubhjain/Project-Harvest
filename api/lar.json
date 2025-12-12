@@ -1,0 +1,91 @@
+{
+  "dining_hall": "LAR",
+  "foods": [
+    {
+      "name": "Coffee",
+      "category": "Beverages",
+      "serving_size": "12 oz",
+      "calories": 5.0,
+      "protein": 0.0,
+      "total_fat": 0.0,
+      "total_carbohydrate": 1.0,
+      "dietary_fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 5.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Oatmeal Bar",
+      "category": "Entrees",
+      "serving_size": "1 bar",
+      "calories": 150.0,
+      "protein": 3.0,
+      "total_fat": 5.0,
+      "total_carbohydrate": 24.0,
+      "dietary_fiber": 3.0,
+      "sugars": 10.0,
+      "sodium": 95.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Yogurt Parfait",
+      "category": "Entrees",
+      "serving_size": "1 cup",
+      "calories": 180.0,
+      "protein": 8.0,
+      "total_fat": 3.0,
+      "total_carbohydrate": 30.0,
+      "dietary_fiber": 2.0,
+      "sugars": 22.0,
+      "sodium": 80.0,
+      "meal_type": "Breakfast",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "BBQ Chicken Pizza",
+      "category": "Entrees",
+      "serving_size": "2 slices",
+      "calories": 420.0,
+      "protein": 24.0,
+      "total_fat": 14.0,
+      "total_carbohydrate": 48.0,
+      "dietary_fiber": 2.0,
+      "sugars": 6.0,
+      "sodium": 980.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Caesar Salad with Chicken",
+      "category": "Entrees",
+      "serving_size": "1 salad",
+      "calories": 380.0,
+      "protein": 32.0,
+      "total_fat": 20.0,
+      "total_carbohydrate": 18.0,
+      "dietary_fiber": 3.0,
+      "sugars": 3.0,
+      "sodium": 820.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    },
+    {
+      "name": "Garlic Breadsticks",
+      "category": "Sides",
+      "serving_size": "2 sticks",
+      "calories": 200.0,
+      "protein": 6.0,
+      "total_fat": 7.0,
+      "total_carbohydrate": 28.0,
+      "dietary_fiber": 2.0,
+      "sugars": 2.0,
+      "sodium": 380.0,
+      "meal_type": "Lunch",
+      "date": "2025-12-12"
+    }
+  ],
+  "count": 6,
+  "last_updated": null
+}
