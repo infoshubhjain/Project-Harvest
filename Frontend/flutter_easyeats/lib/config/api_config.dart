@@ -1,11 +1,12 @@
 class ApiConfig {
-  // Use the deployed backend URL
-  // Update this after deploying to Render or use your own backend URL
-  static const String baseUrl = 'https://easyeats-backend.onrender.com/api';
+  // Using GitHub Pages static JSON API (no backend server needed!)
+  static const String baseUrl = 'https://infoshubhjain.github.io/Project-Harvest/api';
 
-  // For local development, uncomment this:
-  // static const String baseUrl = 'http://localhost:3000/api';
+  // For local development/testing with JSON files:
+  // static const String baseUrl = 'http://localhost:8000/docs/api';
 
-  // For web deployment (GitHub Pages), always use the deployed backend
+  // For traditional backend (if you deploy one later):
+  // static const String baseUrl = 'https://your-backend.onrender.com/api';
+
   static String get apiBaseUrl => baseUrl;
 }

@@ -7,12 +7,11 @@ import '../config/api_config.dart';
 class NutritionService {
   static String get baseUrl => ApiConfig.apiBaseUrl;
 
-  // Get all dining halls
+  // Get all dining halls from static JSON
   static Future<List<String>> getDiningHalls() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/dining-halls'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/dining-halls.json'),
       );
 
       if (response.statusCode == 200) {
@@ -26,32 +25,39 @@ class NutritionService {
     }
   }
 
-  // Get foods for a dining hall
+  // Get foods for a dining hall from static JSON
   static Future<List<FoodItem>> getFoodsForDiningHall(
     String diningHall, {
     String? mealType,
     String? date,
   }) async {
     try {
-      var uri = Uri.parse('$baseUrl/dining-halls/$diningHall/foods');
-
-      final queryParams = <String, String>{};
-      if (mealType != null) queryParams['meal_type'] = mealType;
-      if (date != null) queryParams['date'] = date;
-
-      uri = uri.replace(queryParameters: queryParams);
+      // Convert dining hall name to filename (lowercase, replace spaces/slashes with dashes)
+      final filename = diningHall.toLowerCase()
+          .replaceAll(' ', '-')
+          .replaceAll('/', '-');
 
       final response = await http.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/$filename.json'),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final foodsList = data['foods'] as List;
+        List<dynamic> foodsList = data['foods'] as List;
+
+        // Filter by meal type if specified
+        if (mealType != null) {
+          foodsList = foodsList.where((f) => f['meal_type'] == mealType).toList();
+        }
+
+        // Filter by date if specified
+        if (date != null) {
+          foodsList = foodsList.where((f) => f['date'] == date).toList();
+        }
+
         return foodsList.map((f) => FoodItem.fromJson(f)).toList();
       } else {
-        throw Exception('Failed to load foods');
+        throw Exception('Failed to load foods for $diningHall');
       }
     } catch (e) {
       throw Exception('Network error: ${e.toString()}');

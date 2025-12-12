@@ -1,4 +1,9 @@
 {
-  "dining_halls": [],
-  "count": 0
+  "dining_halls": [
+    "ISR",
+    "Ikenberry Dining Center",
+    "LAR",
+    "PAR"
+  ],
+  "count": 4
 }
