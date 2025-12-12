@@ -217,7 +217,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.2),
+                  color: Colors.grey.withOpacity(0.2),
                   blurRadius: 8,
                   offset: const Offset(0, -2),
                 ),
@@ -303,7 +303,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? Colors.green.withValues(alpha: 0.1) : Colors.white,
+          color: isSelected ? Colors.green.withOpacity(0.1) : Colors.white,
         ),
         child: Row(
           children: [
@@ -374,7 +374,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? Colors.green.withValues(alpha: 0.1) : Colors.white,
+          color: isSelected ? Colors.green.withOpacity(0.1) : Colors.white,
         ),
         child: Row(
           children: [
@@ -586,9 +586,9 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
+              color: Colors.blue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
             ),
             child: Row(
               children: [
