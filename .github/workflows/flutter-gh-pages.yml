@@ -53,6 +53,14 @@ jobs:
             flutter build web --release --base-href "/${REPO_NAME}/"
           fi
 
+      - name: Copy API files to build directory
+        run: |
+          # Copy the static JSON API files to the build directory
+          mkdir -p Frontend/flutter_easyeats/build/web/api
+          cp -r Docs/api/* Frontend/flutter_easyeats/build/web/api/
+          echo "✅ API files copied to build directory"
+          ls -la Frontend/flutter_easyeats/build/web/api/
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
