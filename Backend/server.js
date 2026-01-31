@@ -17,6 +17,10 @@ const db = new sqlite3.Database(dbPath);
 app.use(cors());
 app.use(express.json());
 
+// Serve static API files (for local testing matching GitHub Pages structure)
+// This allows requests to /api/dining-halls.json to serve the file from Docs/api/dining-halls.json
+app.use('/api', express.static(path.join(__dirname, '../Docs/api')));
+
 // API Endpoint
 app.get('/api/meal-plan', (req, res) => {
     const { calories, dining_hall, meal_type } = req.query;

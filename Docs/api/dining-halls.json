@@ -1,10 +1,11 @@
 {
   "dining_halls": [
-    "ISR",
-    "Ikenberry Dining Center",
-    "LAR",
-    "PAR"
+    "Everybody Eats",
+    "Ikenberry Dining Center (Ike)",
+    "Illinois Street Dining Center (ISR)",
+    "Lincoln Avenue Dining Hall (LAR)",
+    "Pennsylvania Avenue Dining Hall (PAR)"
   ],
-  "count": 4,
-  "last_updated": "2026-01-18T04:01:37.244920"
+  "count": 5,
+  "last_updated": "2026-01-31T16:54:13.106028"
 }

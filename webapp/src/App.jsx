@@ -1,22 +1,35 @@
 import { useState, useEffect } from 'react'
 
-const API_BASE = 'https://infoshubhjain.github.io/Project-Harvest/api'
+const API_BASE = import.meta.env.DEV
+  ? '/api'
+  : 'https://infoshubhjain.github.io/Project-Harvest/api'
 
 // Use repository images hosted on GitHub raw to ensure availability
-const BASE_IMAGES_URL = 'https://infoshubhjain.github.io/Project-Harvest/images'
+// In dev, we can verify this works or fallback to similar logic
+const BASE_IMAGES_URL = import.meta.env.DEV
+  ? 'https://infoshubhjain.github.io/Project-Harvest/images' // Keep using remote images for simplicity locally, or '/images' if served
+  : 'https://infoshubhjain.github.io/Project-Harvest/images'
 const DINING_HALL_IMAGES = {
-  'ISR': `${BASE_IMAGES_URL}/ISR.jpg`,
-  'Ikenberry Dining Center': `${BASE_IMAGES_URL}/Ikenberry.jpg`,
-  'LAR': `${BASE_IMAGES_URL}/Allen.jpg`,
-  'PAR': `${BASE_IMAGES_URL}/PAR.webp`
+  'Illinois Street Dining Center (ISR)': `${BASE_IMAGES_URL}/ISR.jpg`,
+  'Ikenberry Dining Center (Ike)': `${BASE_IMAGES_URL}/Ikenberry.jpg`,
+  'Lincoln Avenue Dining Hall (LAR)': `${BASE_IMAGES_URL}/Allen.jpg`,
+  'Pennsylvania Avenue Dining Hall (PAR)': `${BASE_IMAGES_URL}/PAR.webp`,
 }
 
 const DINING_HALL_INFO = {
-  'ISR': 'Illinois Street Residence Hall - Main dining room with diverse menu options',
-  'Ikenberry Dining Center': 'Largest dining hall on campus with multiple stations',
-  'LAR': 'Lincoln Avenue Residence - Comfortable atmosphere with quality meals',
-  'PAR': 'Pennsylvania Avenue Residence - Fresh ingredients and healthy choices'
+  'Illinois Street Dining Center (ISR)': 'Illinois Street Residence - Main dining room with diverse menu options',
+  'Ikenberry Dining Center (Ike)': 'Largest dining hall on campus with multiple stations',
+  'Lincoln Avenue Dining Hall (LAR)': 'Allen/LAR - Comfortable atmosphere with quality meals',
+  'Pennsylvania Avenue Dining Hall (PAR)': 'Pennsylvania Avenue - Fresh ingredients and healthy choices',
 }
+
+// Only display these main dining halls (filter out "Everybody Eats" etc.)
+const MAIN_DINING_HALLS = [
+  'Ikenberry Dining Center (Ike)',
+  'Illinois Street Dining Center (ISR)',
+  'Pennsylvania Avenue Dining Hall (PAR)',
+  'Lincoln Avenue Dining Hall (LAR)'
+]
 
 function App() {
   const [diningHalls, setDiningHalls] = useState([])
@@ -52,7 +65,11 @@ function App() {
       const response = await fetch(`${API_BASE}/dining-halls.json`)
       if (!response.ok) throw new Error('Failed to load dining halls')
       const data = await response.json()
-      setDiningHalls(data.dining_halls || [])
+      // Filter to only show main dining halls in the preferred order
+      const filtered = MAIN_DINING_HALLS.filter(hall =>
+        (data.dining_halls || []).includes(hall)
+      )
+      setDiningHalls(filtered.length > 0 ? filtered : data.dining_halls || [])
       setError(null)
     } catch (err) {
       setError(err.message)
@@ -237,8 +254,8 @@ function App() {
           <p className="subtitle">Select a dining hall to view today's menu and nutrition information</p>
         </div>
 
-            <div className="dining-halls-grid">
-                {diningHalls.map((hall) => (
+        <div className="dining-halls-grid">
+          {diningHalls.map((hall) => (
             <div
               key={hall}
               className="dining-hall-card"
@@ -248,7 +265,7 @@ function App() {
                 <img
                   src={DINING_HALL_IMAGES[hall]}
                   alt={hall}
-                  onError={(e) => { e.target.onerror = null; e.target.src = `${BASE_IMAGES_URL}/Logo.png`; setImageFallbacks(prev => ({...prev, [hall]: true})); }}
+                  onError={(e) => { e.target.onerror = null; e.target.src = `${BASE_IMAGES_URL}/Logo.png`; setImageFallbacks(prev => ({ ...prev, [hall]: true })); }}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 {imageFallbacks[hall] && (

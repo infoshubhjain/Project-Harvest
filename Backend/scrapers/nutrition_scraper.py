@@ -1141,6 +1141,7 @@ if __name__ == "__main__":
     parser.add_argument('--no-headless', dest='headless', action='store_false', help='Run Chrome with UI (for debugging)')
     parser.add_argument('--save-snapshots', action='store_true', help='Save page snapshots for debugging when selectors fail')
     parser.add_argument('--playback', type=str, help='Playback mode: provide a directory of HTML snapshots to use instead of live scraping')
+    parser.add_argument('--days', type=int, default=7, help='Number of days to scrape (default: 7)')
     parser.set_defaults(headless=True)
     args = parser.parse_args()
 
@@ -1148,9 +1149,9 @@ if __name__ == "__main__":
     HEADLESS_MODE = args.headless
     SAVE_SNAPSHOTS = args.save_snapshots
     PLAYBACK_DIR = args.playback
-
+    
     # Number of days to scrape (including today)
-    DAYS_TO_SCRAPE = 7
+    DAYS_TO_SCRAPE = args.days
 
     scraper = NutritionScraperComplete(testing_mode=TESTING_MODE, headless=HEADLESS_MODE)
     if SAVE_SNAPSHOTS:

@@ -1,0 +1,91 @@
+{
+  "dining_hall": "Everybody Eats",
+  "foods": [
+    {
+      "name": "Oatmeal",
+      "category": "Cereals",
+      "serving_size": "Cup (251g)",
+      "calories": 150.0,
+      "protein": 5.0,
+      "total_fat": 2.5,
+      "total_carbohydrate": 27.0,
+      "dietary_fiber": 4.0,
+      "sugars": 0.0,
+      "sodium": 0.01,
+      "meal_type": "Breakfast",
+      "date": "Saturday, January 31, 2026"
+    },
+    {
+      "name": "Oatmeal",
+      "category": "Cereals",
+      "serving_size": "Cup (251g)",
+      "calories": 150.0,
+      "protein": 5.0,
+      "total_fat": 2.5,
+      "total_carbohydrate": 27.0,
+      "dietary_fiber": 4.0,
+      "sugars": 0.0,
+      "sodium": 0.01,
+      "meal_type": "Lunch",
+      "date": "Saturday, January 31, 2026"
+    },
+    {
+      "name": "Seedless Raisins",
+      "category": "Fruits",
+      "serving_size": "1/4 Cup (40g)",
+      "calories": 110.0,
+      "protein": 1.0,
+      "total_fat": 0.0,
+      "total_carbohydrate": 29.0,
+      "dietary_fiber": 1.0,
+      "sugars": 21.0,
+      "sodium": 0.0,
+      "meal_type": "Lunch",
+      "date": "Saturday, January 31, 2026"
+    },
+    {
+      "name": "Minestrone Soup",
+      "category": "Soups",
+      "serving_size": "Cup (170g)",
+      "calories": 50.0,
+      "protein": 3.0,
+      "total_fat": 0.5,
+      "total_carbohydrate": 9.0,
+      "dietary_fiber": 1.0,
+      "sugars": 5.0,
+      "sodium": 0.8,
+      "meal_type": "Lunch",
+      "date": "Saturday, January 31, 2026"
+    },
+    {
+      "name": "White Rice",
+      "category": "Starches",
+      "serving_size": "1/2 Cup (79g)",
+      "calories": 100.0,
+      "protein": 4.0,
+      "total_fat": 0.0,
+      "total_carbohydrate": 22.0,
+      "dietary_fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 0.0,
+      "meal_type": "Lunch",
+      "date": "Saturday, January 31, 2026"
+    },
+    {
+      "name": "Brown Sugar",
+      "category": "Toppings",
+      "serving_size": "Tablespoon (12g)",
+      "calories": 45.0,
+      "protein": 0.0,
+      "total_fat": 0.0,
+      "total_carbohydrate": 12.0,
+      "dietary_fiber": 0.0,
+      "sugars": 12.0,
+      "sodium": 0.0,
+      "meal_type": "Lunch",
+      "date": "Saturday, January 31, 2026"
+    }
+  ],
+  "count": 6,
+  "last_updated": "2026-01-31T16:54:13.106350"
+}
