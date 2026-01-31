@@ -2,8 +2,8 @@ name: Daily Dining Hall Data Scrape
 
 on:
   schedule:
-    # Run at 1:00 AM UTC daily (adjust timezone as needed)
-    - cron: '0 1 * * *'
+    # Run at 2:00 AM CST daily (8:00 AM UTC)
+    - cron: '0 8 * * *'
   workflow_dispatch: # Allow manual trigger
     inputs:
       testing:
@@ -59,6 +59,11 @@ jobs:
           fi
           python3 nutrition_scraper.py $TESTING $SAVESNAP
         timeout-minutes: 60
+
+      - name: Load scraped data into database
+        run: |
+          cd Backend/scrapers
+          python3 load_to_db.py
 
       - name: Export JSON API files
         run: |
