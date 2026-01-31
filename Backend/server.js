@@ -23,7 +23,7 @@ app.use('/api', express.static(path.join(__dirname, '../Docs/api')));
 
 // API Endpoint
 app.get('/api/meal-plan', (req, res) => {
-    const { calories, dining_hall, meal_type } = req.query;
+    const { calories, dining_hall, meal_type, protein } = req.query;
 
     // Validate required parameters
     if (!calories || !dining_hall) {
@@ -49,6 +49,10 @@ app.get('/api/meal-plan', (req, res) => {
 
     if (req.query.goal) {
         args.push('--goal', req.query.goal);
+    }
+
+    if (protein) {
+        args.push('--protein', protein);
     }
 
     // Spawn Python process
@@ -80,30 +84,39 @@ app.get('/api/meal-plan', (req, res) => {
         }
 
         try {
-            // Parse JSON output from Python script
-            // The script might print other things (like warnings) to stdout if not careful
-            // But our modified script should only print JSON when --json is used
-            // We'll try to find the JSON object in the output if there's extra noise
+            // Robust parsing: search for the last line that looks like a JSON object
+            const lines = dataString.trim().split('\n');
+            let mealPlan = null;
 
-            // Simple attempt: parse the whole string
-            const mealPlan = JSON.parse(dataString);
-            res.json(mealPlan);
-        } catch (e) {
-            console.error('Failed to parse JSON output:', e);
-            console.error('Raw output:', dataString);
+            // Try parsing from the end backwards to find the JSON result
+            for (let i = lines.length - 1; i >= 0; i--) {
+                const line = lines[i].trim();
+                if (line.startsWith('{') && line.endsWith('}')) {
+                    try {
+                        mealPlan = JSON.parse(line);
+                        break;
+                    } catch (e) {
+                        // Not valid JSON, continue searching
+                    }
+                }
+            }
 
-            // Fallback: try to find the last JSON object in the output
-            try {
-                const lines = dataString.trim().split('\n');
-                const lastLine = lines[lines.length - 1];
-                const mealPlan = JSON.parse(lastLine);
+            if (mealPlan) {
                 res.json(mealPlan);
-            } catch (e2) {
+            } else {
+                console.error('No valid JSON found in output');
+                console.error('Raw output:', dataString);
                 res.status(500).json({
                     error: 'Invalid response from meal planner',
                     raw_output: dataString
                 });
             }
+        } catch (e) {
+            console.error('Failed to process meal planner output:', e);
+            res.status(500).json({
+                error: 'Error processing meal plan',
+                details: e.message
+            });
         }
     });
 });

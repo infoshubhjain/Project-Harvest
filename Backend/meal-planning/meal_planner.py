@@ -63,7 +63,7 @@ class MealPlanner:
             self.load_data()
 
         # Filter by dining hall (partial match)
-        filtered = self.data[self.data['dining_hall'].str.contains(dining_hall, case=False, na=False)]
+        filtered = self.data[self.data['dining_hall'].str.contains(dining_hall, case=False, na=False, regex=False)]
 
         # Filter by meal type
         filtered = filtered[filtered['meal_type'] == meal_type]
@@ -307,7 +307,7 @@ class MealPlanner:
             
         return final_items
 
-    def evaluate_meal(self, items, target_calories, goal_config):
+    def evaluate_meal(self, items, target_calories, goal_config, target_protein=None):
         """
         Calculate a total score for a complete meal
         """
@@ -322,7 +322,13 @@ class MealPlanner:
         cal_diff_percent = abs(total_cals - target_calories) / target_calories
         cal_score = max(0, 100 - (cal_diff_percent * 200)) # 100 pts if exact, 0 if >50% off
         
-        # 2. Macro Balance Score
+        # 2. Protein Score (if target specified)
+        protein_score = 0
+        if target_protein and target_protein > 0:
+            protein_diff_percent = abs(total_p - target_protein) / target_protein
+            protein_score = max(0, 100 - (protein_diff_percent * 200))
+        
+        # 3. Macro Balance Score
         p_ratio = (total_p * 4) / total_cals
         f_ratio = (total_f * 9) / total_cals
         c_ratio = (total_c * 4) / total_cals
@@ -335,17 +341,19 @@ class MealPlanner:
         )
         macro_score = max(0, 100 - (dist * 200))
         
-        # 3. Diversity Score (bonus for using multiple categories)
+        # 4. Diversity Score (bonus for using multiple categories)
         cats = set()
         for item in items:
-            # We need to re-infer category or pass it through. 
-            # For simplicity, we assume the item dict has 'category'
             cats.add(str(item['category']))
         div_score = len(cats) * 10
         
-        return (cal_score * 0.4) + (macro_score * 0.5) + (div_score * 0.1)
+        # Weight the scores - if protein target specified, give it significant weight
+        if target_protein and target_protein > 0:
+            return (cal_score * 0.30) + (protein_score * 0.25) + (macro_score * 0.35) + (div_score * 0.1)
+        else:
+            return (cal_score * 0.4) + (macro_score * 0.5) + (div_score * 0.1)
 
-    def create_meal_plan(self, target_calories, dining_hall, meal_type=None, goal='balanced'):
+    def create_meal_plan(self, target_calories, dining_hall, meal_type=None, goal='balanced', target_protein=None):
         """
         Create an optimized meal plan using Randomized Search
         """
@@ -382,8 +390,8 @@ class MealPlanner:
             # 3. Optimize servings to hit calorie target
             optimized_items = self.optimize_servings(items_list, target_calories)
             
-            # 4. Score
-            score = self.evaluate_meal(optimized_items, target_calories, goal_config)
+            # 4. Score with protein target if specified
+            score = self.evaluate_meal(optimized_items, target_calories, goal_config, target_protein)
             
             if score > best_score:
                 best_score = score
@@ -414,7 +422,7 @@ class MealPlanner:
                 'score': 0 # Legacy field
             })
 
-        return {
+        result = {
             'dining_hall': dining_hall,
             'meal_type': meal_type,
             'target_calories': target_calories,
@@ -432,6 +440,13 @@ class MealPlanner:
             },
             'meets_target': abs(total_calories - target_calories) < (target_calories * 0.1)
         }
+        
+        # Add protein target info if specified
+        if target_protein:
+            result['target_protein'] = target_protein
+            result['meets_protein_target'] = abs(total_protein - target_protein) < (target_protein * 0.2)
+        
+        return result
 
 if __name__ == "__main__":
     import argparse
@@ -449,6 +464,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--calories', type=int, default=600)
+    parser.add_argument('--protein', type=int, default=None, help='Target protein in grams')
     parser.add_argument('--hall', type=str, default='ISR')
     parser.add_argument('--meal', type=str)
     parser.add_argument('--goal', type=str, default='balanced', choices=['balanced', 'weight_loss', 'bulking', 'keto'])
@@ -462,7 +478,8 @@ if __name__ == "__main__":
         target_calories=args.calories,
         dining_hall=args.hall,
         meal_type=args.meal,
-        goal=args.goal
+        goal=args.goal,
+        target_protein=args.protein
     )
 
     if args.json:
