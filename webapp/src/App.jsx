@@ -60,6 +60,87 @@ function MealBuilder({ diningHall, onBack }) {
     else setMealType('Dinner')
   }, [])
 
+  async function generateMealPlanLocal(targetCals, targetProt, currentMealType, currentGoal) {
+    console.log('Running client-side meal generator fallback...')
+
+    // 1. Fetch menu data if we don't have it
+    let items = []
+    try {
+      const filename = diningHall.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
+      const response = await fetch(`${API_BASE}/${filename}.json`)
+      if (!response.ok) throw new Error('Could not load menu for local generation')
+      const data = await response.json()
+      items = data.foods || []
+    } catch (e) {
+      console.error('Local generation failed to load data:', e)
+      throw new Error('Could not load menu data for offline generation.')
+    }
+
+    // 2. Filter by meal type
+    const pool = items.filter(item => item.meal_type === currentMealType)
+    if (pool.length === 0) {
+      throw new Error(`No items found for ${currentMealType} at this dining hall.`)
+    }
+
+    // 3. Simple greedy randomized selection
+    let selected = []
+    let currentCals = 0
+    let currentProt = 0
+    let currentCarbs = 0
+    let currentFat = 0
+
+    // Shuffle the pool for variety
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
+
+    // Pick items until we hit ~target calories
+    for (const item of shuffled) {
+      const itemCals = item.calories || 0
+      if (currentCals + itemCals <= targetCals + 50) {
+        selected.push({
+          name: item.name,
+          category: item.category || 'N/A',
+          servings: 1,
+          calories: item.calories || 0,
+          protein: item.protein || 0,
+          carbs: item.total_carbohydrate || 0,
+          fat: item.total_fat || 0
+        })
+        currentCals += item.calories || 0
+        currentProt += item.protein || 0
+        currentCarbs += item.total_carbohydrate || 0
+        currentFat += item.total_fat || 0
+      }
+      if (currentCals >= targetCals - 50) break
+    }
+
+    if (selected.length === 0) {
+      throw new Error('Could not build a meal within the calorie limit.')
+    }
+
+    const totalMacros = currentProt * 4 + currentCarbs * 4 + currentFat * 9
+
+    return {
+      dining_hall: diningHall,
+      meal_type: currentMealType,
+      target_calories: targetCals,
+      target_protein: targetProt,
+      goal: GOALS[currentGoal]?.label || currentGoal,
+      items: selected,
+      totals: {
+        calories: currentCals,
+        protein: currentProt,
+        carbs: currentCarbs,
+        fat: currentFat,
+        protein_percent: totalMacros > 0 ? Math.round((currentProt * 4 / totalMacros) * 100) : 0,
+        carb_percent: totalMacros > 0 ? Math.round((currentCarbs * 4 / totalMacros) * 100) : 0,
+        fat_percent: totalMacros > 0 ? Math.round((currentFat * 9 / totalMacros) * 100) : 0
+      },
+      meets_target: Math.abs(currentCals - targetCals) < 100,
+      meets_protein_target: currentProt >= targetProt - 5,
+      is_offline: true
+    }
+  }
+
   async function generateMealPlan() {
     try {
       setLoading(true)
@@ -76,14 +157,29 @@ function MealBuilder({ diningHall, onBack }) {
         meal_type: mealType
       })
 
-      const response = await fetch(`${BACKEND_API}/meal-plan?${params}`)
+      const fetchUrl = `${BACKEND_API}/meal-plan?${params}`
+      console.log('Fetching meal plan from:', fetchUrl)
 
-      if (!response.ok) {
-        const errData = await response.json()
-        throw new Error(errData.error || 'Failed to generate meal plan')
+      let data
+      try {
+        const response = await fetch(fetchUrl)
+
+        if (!response.ok) {
+          let errorMsg = 'Failed to generate meal plan'
+          try {
+            const errData = await response.json()
+            errorMsg = errData.error || errorMsg
+          } catch (e) {
+            errorMsg = `Error ${response.status}: ${response.statusText}`
+          }
+          throw new Error(errorMsg)
+        }
+
+        data = await response.json()
+      } catch (fetchErr) {
+        console.warn('Backend fetch failed, falling back to local generator:', fetchErr)
+        data = await generateMealPlanLocal(calVal, protVal, mealType, goal)
       }
-
-      const data = await response.json()
 
       if (data.error) {
         throw new Error(data.error)
@@ -91,6 +187,7 @@ function MealBuilder({ diningHall, onBack }) {
 
       setMealPlan(data)
     } catch (err) {
+      console.error('Meal generation error:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -203,6 +300,7 @@ function MealBuilder({ diningHall, onBack }) {
             <div className="results-header">
               <h3>Your Personalized Meal</h3>
               <div className="meal-meta">
+                {mealPlan.is_offline && <span className="meta-badge offline" style={{ backgroundColor: '#666' }}>Offline Mode</span>}
                 <span className="meta-badge">{mealPlan.meal_type}</span>
                 <span className="meta-badge goal">{mealPlan.goal}</span>
               </div>

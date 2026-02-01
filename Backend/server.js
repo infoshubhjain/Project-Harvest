@@ -24,6 +24,7 @@ app.use('/api', express.static(path.join(__dirname, '../Docs/api')));
 // API Endpoint
 app.get('/api/meal-plan', (req, res) => {
     const { calories, dining_hall, meal_type, protein } = req.query;
+    console.log(`[${new Date().toISOString()}] Incoming meal-plan request:`, { calories, dining_hall, meal_type, protein });
 
     // Validate required parameters
     if (!calories || !dining_hall) {
