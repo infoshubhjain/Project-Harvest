@@ -2,17 +2,89 @@
   "meals": [
     {
       "meal_type": "Breakfast",
-      "date": "Saturday, January 31, 2026"
+      "date": "Wednesday, February 4, 2026"
     },
     {
       "meal_type": "Dinner",
-      "date": "Saturday, January 31, 2026"
+      "date": "Wednesday, February 4, 2026"
     },
     {
       "meal_type": "Lunch",
-      "date": "Saturday, January 31, 2026"
+      "date": "Wednesday, February 4, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Tuesday, February 3, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Tuesday, February 3, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Tuesday, February 3, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Thursday, February 5, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Thursday, February 5, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Thursday, February 5, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Sunday, February 1, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Sunday, February 1, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Sunday, February 1, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Saturday, February 7, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Saturday, February 7, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Saturday, February 7, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Monday, February 2, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Monday, February 2, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Monday, February 2, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Friday, February 6, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Friday, February 6, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Friday, February 6, 2026"
     }
   ],
-  "count": 3,
-  "last_updated": "2026-01-31T16:54:13.111328"
+  "count": 21,
+  "last_updated": "2026-02-01T09:41:15.374021"
 }
