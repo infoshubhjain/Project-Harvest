@@ -38,15 +38,11 @@
     },
     {
       "meal_type": "Breakfast",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
-      "meal_type": "Dinner",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "meal_type": "Breakfast",
@@ -85,6 +81,6 @@
       "date": "Friday, February 6, 2026"
     }
   ],
-  "count": 21,
-  "last_updated": "2026-02-01T09:41:15.374021"
+  "count": 20,
+  "last_updated": "2026-02-02T09:55:16.221254"
 }

@@ -898,20 +898,6 @@
       "date": "Friday, February 6, 2026"
     },
     {
-      "name": "Tri-Color Roasted Potatoes",
-      "category": "Appetizers & Sides",
-      "serving_size": "1/2 Cup (113g)",
-      "calories": 120.0,
-      "protein": 3.0,
-      "total_fat": 0.5,
-      "total_carbohydrate": 26.0,
-      "dietary_fiber": 3.0,
-      "sugars": 3.0,
-      "sodium": 0.44,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
       "name": "Vegetable Egg Rolls",
       "category": "Appetizers & Sides",
       "serving_size": "Each (47g)",
@@ -1077,7 +1063,7 @@
       "sugars": 0.0,
       "sodium": 0.34,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Pita Bread",
@@ -1500,6 +1486,20 @@
       "date": "Monday, February 2, 2026"
     },
     {
+      "name": "Blueberry Crumble Dessert Bar",
+      "category": "Desserts",
+      "serving_size": "Slice (1/30) (89g)",
+      "calories": 350.0,
+      "protein": 3.0,
+      "total_fat": 16.0,
+      "total_carbohydrate": 48.0,
+      "dietary_fiber": 3.0,
+      "sugars": 26.0,
+      "sodium": 0.0,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
+    },
+    {
       "name": "Brownies",
       "category": "Desserts",
       "serving_size": "Slice (1/96) (50g)",
@@ -1528,20 +1528,6 @@
       "date": "Wednesday, February 4, 2026"
     },
     {
-      "name": "Froot Loop Treats",
-      "category": "Desserts",
-      "serving_size": "Slice (35g)",
-      "calories": 140.0,
-      "protein": 1.0,
-      "total_fat": 4.0,
-      "total_carbohydrate": 25.0,
-      "dietary_fiber": 0.0,
-      "sugars": 14.0,
-      "sodium": 0.075,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
       "name": "Macadamia Nut Cookie",
       "category": "Desserts",
       "serving_size": "Each (38g)",
@@ -1554,6 +1540,34 @@
       "sodium": 0.125,
       "meal_type": "Lunch",
       "date": "Monday, February 2, 2026"
+    },
+    {
+      "name": "Mini Cinnamon Roll",
+      "category": "Desserts",
+      "serving_size": "1 Roll (35g)",
+      "calories": 90.0,
+      "protein": 2.0,
+      "total_fat": 1.5,
+      "total_carbohydrate": 17.0,
+      "dietary_fiber": 0.0,
+      "sugars": 4.0,
+      "sodium": 0.1,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
+    },
+    {
+      "name": "Peanut Butter Cookie",
+      "category": "Desserts",
+      "serving_size": "Each (43g)",
+      "calories": 210.0,
+      "protein": 3.0,
+      "total_fat": 11.0,
+      "total_carbohydrate": 25.0,
+      "dietary_fiber": 1.0,
+      "sugars": 15.0,
+      "sodium": 0.2,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Rice Krispies Treat",
@@ -1680,6 +1694,20 @@
       "sodium": 0.07,
       "meal_type": "Lunch",
       "date": "Saturday, February 7, 2026"
+    },
+    {
+      "name": "Scrambled Egg Toppings",
+      "category": "Dressings & Condiments",
+      "serving_size": "1/4 Cup (28g)",
+      "calories": 45.0,
+      "protein": 2.0,
+      "total_fat": 3.0,
+      "total_carbohydrate": 1.0,
+      "dietary_fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 0.07,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Tartar Sauce",
@@ -1836,20 +1864,6 @@
       "date": "Tuesday, February 3, 2026"
     },
     {
-      "name": "French Toast Casserole",
-      "category": "Entrees",
-      "serving_size": "5 Oz Portion (343g)",
-      "calories": 580.0,
-      "protein": 21.0,
-      "total_fat": 19.0,
-      "total_carbohydrate": 78.0,
-      "dietary_fiber": 3.0,
-      "sugars": 37.0,
-      "sodium": 0.56,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
       "name": "Garden Veggie Burger",
       "category": "Entrees",
       "serving_size": "Each (96g)",
@@ -1904,20 +1918,6 @@
       "sodium": 0.97,
       "meal_type": "Lunch",
       "date": "Wednesday, February 4, 2026"
-    },
-    {
-      "name": "Halal Chicken Sausage Links",
-      "category": "Entrees",
-      "serving_size": "Piece (37g)",
-      "calories": 70.0,
-      "protein": 6.0,
-      "total_fat": 4.5,
-      "total_carbohydrate": 2.0,
-      "dietary_fiber": 0.0,
-      "sugars": 0.0,
-      "sodium": 0.22,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
     },
     {
       "name": "Halal Grilled Chicken Breast",
@@ -1990,6 +1990,20 @@
       "date": "Monday, February 2, 2026"
     },
     {
+      "name": "Honey Baked Ham",
+      "category": "Entrees",
+      "serving_size": "4 Ounce (114g)",
+      "calories": 190.0,
+      "protein": 16.0,
+      "total_fat": 10.0,
+      "total_carbohydrate": 8.0,
+      "dietary_fiber": 0.0,
+      "sugars": 7.0,
+      "sodium": 1.28,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
+    },
+    {
       "name": "Jain Tofu Scramble",
       "category": "Entrees",
       "serving_size": "1 Cup (181g)",
@@ -2015,21 +2029,7 @@
       "sugars": 2.0,
       "sodium": 1.58,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
-      "name": "Lentils with Spinach, Squash & Parsnips",
-      "category": "Entrees",
-      "serving_size": "1/2 Cup (138g)",
-      "calories": 130.0,
-      "protein": 7.0,
-      "total_fat": 1.0,
-      "total_carbohydrate": 23.0,
-      "dietary_fiber": 9.0,
-      "sugars": 4.0,
-      "sodium": 0.12,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Plant-Based Chicken Patty Sandwich",
@@ -2085,6 +2085,20 @@
       "sugars": 3.0,
       "sodium": 0.73,
       "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
+    },
+    {
+      "name": "Sausage Pizza",
+      "category": "Entrees",
+      "serving_size": "1/12 Slice (110g)",
+      "calories": 260.0,
+      "protein": 13.0,
+      "total_fat": 13.0,
+      "total_carbohydrate": 27.0,
+      "dietary_fiber": 1.0,
+      "sugars": 3.0,
+      "sodium": 0.73,
+      "meal_type": "Lunch",
       "date": "Tuesday, February 3, 2026"
     },
     {
@@ -2100,6 +2114,20 @@
       "sodium": 0.1,
       "meal_type": "Lunch",
       "date": "Saturday, February 7, 2026"
+    },
+    {
+      "name": "Scrambled Eggs",
+      "category": "Entrees",
+      "serving_size": "1/3 Cup (75g)",
+      "calories": 150.0,
+      "protein": 9.0,
+      "total_fat": 11.0,
+      "total_carbohydrate": 0.0,
+      "dietary_fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 0.1,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Smoked Salmon",
@@ -2130,6 +2158,20 @@
       "date": "Monday, February 2, 2026"
     },
     {
+      "name": "Spinach Mushroom & Jack Frittata",
+      "category": "Entrees",
+      "serving_size": "Slice (124g)",
+      "calories": 220.0,
+      "protein": 16.0,
+      "total_fat": 17.0,
+      "total_carbohydrate": 0.0,
+      "dietary_fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 0.39,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
+    },
+    {
       "name": "Thai Drunken Noodles",
       "category": "Entrees",
       "serving_size": "1 Cup (311g)",
@@ -2156,6 +2198,20 @@
       "sodium": 0.58,
       "meal_type": "Lunch",
       "date": "Saturday, February 7, 2026"
+    },
+    {
+      "name": "Three Cheese Pizza",
+      "category": "Entrees",
+      "serving_size": "Slice (96g)",
+      "calories": 220.0,
+      "protein": 11.0,
+      "total_fat": 9.0,
+      "total_carbohydrate": 27.0,
+      "dietary_fiber": 1.0,
+      "sugars": 3.0,
+      "sodium": 0.58,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Three Cheese Pizza",
@@ -2270,48 +2326,6 @@
       "date": "Saturday, February 7, 2026"
     },
     {
-      "name": "Meatballs",
-      "category": "Proteins",
-      "serving_size": "3 Each (43g)",
-      "calories": 80.0,
-      "protein": 9.0,
-      "total_fat": 5.0,
-      "total_carbohydrate": 2.0,
-      "dietary_fiber": 2.0,
-      "sugars": 0.0,
-      "sodium": 0.37,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
-      "name": "Scrambled Eggs",
-      "category": "Proteins",
-      "serving_size": "1/3 Cup (75g)",
-      "calories": 150.0,
-      "protein": 9.0,
-      "total_fat": 11.0,
-      "total_carbohydrate": 0.0,
-      "dietary_fiber": 0.0,
-      "sugars": 0.0,
-      "sodium": 0.1,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
-      "name": "Vegan Ground Beef",
-      "category": "Proteins",
-      "serving_size": "1/2 Cup (82g)",
-      "calories": 90.0,
-      "protein": 15.0,
-      "total_fat": 1.0,
-      "total_carbohydrate": 7.0,
-      "dietary_fiber": 3.0,
-      "sugars": 1.0,
-      "sodium": 0.4,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
       "name": "Vegan Ground Beef",
       "category": "Proteins",
       "serving_size": "1/2 Cup (82g)",
@@ -2352,6 +2366,34 @@
       "sodium": 0.18,
       "meal_type": "Lunch",
       "date": "Saturday, February 7, 2026"
+    },
+    {
+      "name": "Hummus",
+      "category": "Salads & Salad Bar",
+      "serving_size": "1/4 Cup (60g)",
+      "calories": 100.0,
+      "protein": 3.0,
+      "total_fat": 5.0,
+      "total_carbohydrate": 9.0,
+      "dietary_fiber": 2.0,
+      "sugars": 2.0,
+      "sodium": 0.075,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
+    },
+    {
+      "name": "Loaded Baked Potato Salad",
+      "category": "Salads & Salad Bar",
+      "serving_size": "1/2 cup (107g)",
+      "calories": 190.0,
+      "protein": 6.0,
+      "total_fat": 14.0,
+      "total_carbohydrate": 10.0,
+      "dietary_fiber": 1.0,
+      "sugars": 0.0,
+      "sodium": 0.34,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Long Life Salad w/Pistachios Jain",
@@ -2408,20 +2450,6 @@
       "sodium": 0.11,
       "meal_type": "Lunch",
       "date": "Saturday, February 7, 2026"
-    },
-    {
-      "name": "Red Pepper Hummus",
-      "category": "Salads & Salad Bar",
-      "serving_size": "1/4 Cup (52g)",
-      "calories": 80.0,
-      "protein": 3.0,
-      "total_fat": 4.5,
-      "total_carbohydrate": 7.0,
-      "dietary_fiber": 1.0,
-      "sugars": 1.0,
-      "sodium": 0.11,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
     },
     {
       "name": "Red Pepper Hummus",
@@ -2519,7 +2547,7 @@
       "sugars": 2.0,
       "sodium": 0.52,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Cajun Aioli",
@@ -2606,20 +2634,6 @@
       "date": "Wednesday, February 4, 2026"
     },
     {
-      "name": "Marinara Sauce",
-      "category": "Sauces",
-      "serving_size": "1/4 Cup (64g)",
-      "calories": 35.0,
-      "protein": 1.0,
-      "total_fat": 1.0,
-      "total_carbohydrate": 6.0,
-      "dietary_fiber": 1.0,
-      "sugars": 4.0,
-      "sodium": 0.27,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
       "name": "Pepper Gravy",
       "category": "Sauces",
       "serving_size": "1/4 Cup (56g)",
@@ -2687,7 +2701,7 @@
       "sugars": 0.0,
       "sodium": 0.72,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Pesto Sauce",
@@ -2744,20 +2758,6 @@
       "sodium": 0.24,
       "meal_type": "Lunch",
       "date": "Wednesday, February 4, 2026"
-    },
-    {
-      "name": "Sage Cream Sauce",
-      "category": "Sauces",
-      "serving_size": "Serving (54g)",
-      "calories": 150.0,
-      "protein": 0.0,
-      "total_fat": 15.0,
-      "total_carbohydrate": 1.0,
-      "dietary_fiber": 0.0,
-      "sugars": 0.0,
-      "sodium": 0.05,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
     },
     {
       "name": "Sauce BBQ Sweet Baby Rays No Sugar Added",
@@ -2942,20 +2942,6 @@
       "date": "Friday, February 6, 2026"
     },
     {
-      "name": "Minestrone Soup",
-      "category": "Soups",
-      "serving_size": "Cup (170g)",
-      "calories": 50.0,
-      "protein": 3.0,
-      "total_fat": 0.5,
-      "total_carbohydrate": 9.0,
-      "dietary_fiber": 1.0,
-      "sugars": 5.0,
-      "sodium": 0.8,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
       "name": "Miso Soup",
       "category": "Soups",
       "serving_size": "Cup (295g)",
@@ -2982,6 +2968,20 @@
       "sodium": 0.58,
       "meal_type": "Lunch",
       "date": "Friday, February 6, 2026"
+    },
+    {
+      "name": "Roasted Red Pepper & Gouda Soup",
+      "category": "Soups",
+      "serving_size": "Cup (240g)",
+      "calories": 300.0,
+      "protein": 7.0,
+      "total_fat": 22.0,
+      "total_carbohydrate": 18.0,
+      "dietary_fiber": 4.0,
+      "sugars": 13.0,
+      "sodium": 0.9,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Baked Beans",
@@ -3040,18 +3040,18 @@
       "date": "Thursday, February 5, 2026"
     },
     {
-      "name": "Illinois-Grown White Rice",
+      "name": "Jasmine Rice",
       "category": "Starches",
-      "serving_size": "1/2 Cup (92g)",
-      "calories": 120.0,
-      "protein": 5.0,
+      "serving_size": "1/2 Cup (85g)",
+      "calories": 110.0,
+      "protein": 2.0,
       "total_fat": 0.0,
-      "total_carbohydrate": 26.0,
+      "total_carbohydrate": 24.0,
       "dietary_fiber": 0.0,
       "sugars": 0.0,
       "sodium": 0.0,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Kimchi Fried Rice",
@@ -3082,20 +3082,6 @@
       "date": "Saturday, February 7, 2026"
     },
     {
-      "name": "Penne Pasta",
-      "category": "Starches",
-      "serving_size": "Cup (131g)",
-      "calories": 180.0,
-      "protein": 6.0,
-      "total_fat": 1.0,
-      "total_carbohydrate": 37.0,
-      "dietary_fiber": 2.0,
-      "sugars": 0.0,
-      "sodium": 0.07,
-      "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
-    },
-    {
       "name": "Red Kidney Beans",
       "category": "Starches",
       "serving_size": "Ounce (28g)",
@@ -3108,6 +3094,20 @@
       "sodium": 0.03,
       "meal_type": "Lunch",
       "date": "Tuesday, February 3, 2026"
+    },
+    {
+      "name": "Roasted Red Potatoes w/ Rosemary",
+      "category": "Starches",
+      "serving_size": "1/2 Cup (114g)",
+      "calories": 100.0,
+      "protein": 2.0,
+      "total_fat": 2.0,
+      "total_carbohydrate": 18.0,
+      "dietary_fiber": 2.0,
+      "sugars": 1.0,
+      "sodium": 0.17,
+      "meal_type": "Lunch",
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Seasoned Potatoes",
@@ -3373,7 +3373,7 @@
       "sugars": 0.0,
       "sodium": 0.0,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Crushed Red Pepper",
@@ -3541,7 +3541,7 @@
       "sugars": 0.0,
       "sodium": 0.15,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Grated Parmesan Cheese",
@@ -4006,18 +4006,18 @@
       "date": "Wednesday, February 4, 2026"
     },
     {
-      "name": "California Blend Vegetables",
+      "name": "Asparagus Chunks",
       "category": "Vegetables",
-      "serving_size": "1/2 Cup (113g)",
-      "calories": 30.0,
-      "protein": 2.0,
+      "serving_size": "Cup (134g)",
+      "calories": 35.0,
+      "protein": 5.0,
       "total_fat": 0.0,
-      "total_carbohydrate": 6.0,
-      "dietary_fiber": 4.0,
-      "sugars": 2.0,
-      "sodium": 0.04,
+      "total_carbohydrate": 5.0,
+      "dietary_fiber": 3.0,
+      "sugars": 0.0,
+      "sodium": 0.015,
       "meal_type": "Lunch",
-      "date": "Sunday, February 1, 2026"
+      "date": "Sunday, February 8, 2026"
     },
     {
       "name": "Fresh Steamed Spinach",
@@ -4105,5 +4105,5 @@
     }
   ],
   "count": 293,
-  "last_updated": "2026-02-01T09:41:15.370271"
+  "last_updated": "2026-02-02T09:55:16.217496"
 }
