@@ -272,9 +272,41 @@ body {
 /* Filters */
 .menu-filters {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 28px;
   flex-wrap: wrap;
+}
+
+.filter-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  min-width: 60px;
+}
+
+.date-select {
+  background: white;
+  border: 2px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.date-select:hover, .date-select:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 4px rgba(74, 124, 36, 0.1);
 }
 
 .filter-button {

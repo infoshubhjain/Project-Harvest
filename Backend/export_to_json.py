@@ -38,7 +38,7 @@ for hall in halls:
             meal_type, date
         FROM nutrition_data
         WHERE dining_hall = ?
-        ORDER BY meal_type, category, name
+        ORDER BY date DESC, meal_type, category, name
     ''', (hall,))
 
     foods = [dict(row) for row in cursor.fetchall()]

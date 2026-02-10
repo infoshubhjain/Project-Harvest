@@ -50,6 +50,7 @@ function MealBuilder({ diningHall, onBack }) {
   const [goal, setGoal] = useState('balanced')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [selectedDate, setSelectedDate] = useState('')
   const [mealPlan, setMealPlan] = useState(null)
 
   // Initialize meal type based on current time
@@ -76,10 +77,15 @@ function MealBuilder({ diningHall, onBack }) {
       throw new Error('Could not load menu data for offline generation.')
     }
 
-    // 2. Filter by meal type
-    const pool = items.filter(item => item.meal_type === currentMealType)
+    // 2. Filter by meal type and selected date
+    const dateToFilter = selectedDate || (items.length > 0 ? items[0].date : '')
+    const pool = items.filter(item =>
+      item.meal_type === currentMealType &&
+      (!dateToFilter || item.date === dateToFilter)
+    )
+
     if (pool.length === 0) {
-      throw new Error(`No items found for ${currentMealType} at this dining hall.`)
+      throw new Error(`No items found for ${currentMealType} on ${dateToFilter} at this dining hall.`)
     }
 
     // 3. Simple greedy randomized selection
@@ -391,9 +397,10 @@ function MealBuilder({ diningHall, onBack }) {
 function App() {
   const [diningHalls, setDiningHalls] = useState([])
   const [selectedHall, setSelectedHall] = useState(null)
-  const [mealBuilderHall, setMealBuilderHall] = useState(null)
   const [menuItems, setMenuItems] = useState([])
   const [filteredItems, setFilteredItems] = useState([])
+  const [availableDates, setAvailableDates] = useState([])
+  const [selectedDate, setSelectedDate] = useState('All')
   const [selectedMealType, setSelectedMealType] = useState('All')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -410,12 +417,15 @@ function App() {
   }, [selectedHall])
 
   useEffect(() => {
-    if (selectedMealType === 'All') {
-      setFilteredItems(menuItems)
-    } else {
-      setFilteredItems(menuItems.filter(item => item.meal_type === selectedMealType))
+    let filtered = menuItems
+    if (selectedMealType !== 'All') {
+      filtered = filtered.filter(item => item.meal_type === selectedMealType)
     }
-  }, [selectedMealType, menuItems])
+    if (selectedDate !== 'All') {
+      filtered = filtered.filter(item => item.date === selectedDate)
+    }
+    setFilteredItems(filtered)
+  }, [selectedMealType, selectedDate, menuItems])
 
   async function loadDiningHalls() {
     try {
@@ -445,6 +455,16 @@ function App() {
       const data = await response.json()
       setMenuItems(data.foods || [])
       setFilteredItems(data.foods || [])
+
+      // Extract unique dates
+      const dates = [...new Set((data.foods || []).map(item => item.date))]
+      setAvailableDates(dates)
+      if (dates.length > 0) {
+        setSelectedDate(dates[0]) // Default to most recent date
+      } else {
+        setSelectedDate('All')
+      }
+
       setSelectedMealType('All')
       setError(null)
     } catch (err) {
@@ -540,19 +560,36 @@ function App() {
             </div>
 
             <div className="menu-filters">
-              {getMealTypes().map(type => (
-                <button
-                  key={type}
-                  className={`filter-button ${selectedMealType === type ? 'active' : ''}`}
-                  onClick={() => setSelectedMealType(type)}
+              <div className="filter-group">
+                <span className="filter-label">📅 Date:</span>
+                <select
+                  className="date-select"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
                 >
-                  {type === 'All' && '🍽️ '}
-                  {type === 'Breakfast' && '🌅 '}
-                  {type === 'Lunch' && '☀️ '}
-                  {type === 'Dinner' && '🌙 '}
-                  {type}
-                </button>
-              ))}
+                  <option value="All">All Dates</option>
+                  {availableDates.map(date => (
+                    <option key={date} value={date}>{date}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <span className="filter-label">🍽️ Meal:</span>
+                {getMealTypes().map(type => (
+                  <button
+                    key={type}
+                    className={`filter-button ${selectedMealType === type ? 'active' : ''}`}
+                    onClick={() => setSelectedMealType(type)}
+                  >
+                    {type === 'All' && '🍽️ '}
+                    {type === 'Breakfast' && '🌅 '}
+                    {type === 'Lunch' && '☀️ '}
+                    {type === 'Dinner' && '🌙 '}
+                    {type}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {loading ? (
