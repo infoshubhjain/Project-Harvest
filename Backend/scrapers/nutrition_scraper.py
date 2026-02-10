@@ -44,13 +44,14 @@ class NutritionScraperComplete:
         """
         options = webdriver.ChromeOptions()
         if headless:
-            options.add_argument('--headless')
+            options.add_argument('--headless=new')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         # Recommended for headless Chrome stability
         options.add_argument('--disable-gpu')
+        options.add_argument('--window-size=1920,1080')
         options.add_experimental_option('useAutomationExtension', False)
         options.add_experimental_option('excludeSwitches', ['enable-automation'])
         
@@ -142,7 +143,8 @@ class NutritionScraperComplete:
             if not getattr(self, 'playback_mode', False):
                 dropdown_items = []
                 try:
-                    dropdown = self.driver.find_element(By.ID, "nav-unit-selector")
+                    # Use WebDriverWait to ensure the dropdown is loaded
+                    dropdown = self.wait.until(EC.presence_of_element_located((By.ID, "nav-unit-selector")))
                     dropdown_items = dropdown.find_elements(By.CSS_SELECTOR, ".dropdown-item")
                 except Exception:
                     # Fallback: try to find other menu selectors that include data-unitoid or unit links
@@ -358,7 +360,10 @@ class NutritionScraperComplete:
             results_panel = None
             menu_items = []
             try:
-                results_panel = self.driver.find_element(By.ID, "navBarResults")
+                # Wait for results panel items to appear
+                results_panel = self.wait.until(EC.presence_of_element_located((By.ID, "navBarResults")))
+                # Wait for at least one list item to be present
+                self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#navBarResults li.list-group-item")))
                 menu_items = results_panel.find_elements(By.CSS_SELECTOR, "li.list-group-item")
             except Exception:
                 # Fallback to any clickable items that look like menu items

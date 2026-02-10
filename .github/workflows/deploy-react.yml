@@ -45,16 +45,11 @@ jobs:
       - name: Copy dining hall images into build
         run: |
           mkdir -p webapp/dist/images
-          cp -r Frontend/flutter_easyeats/assets/images/* webapp/dist/images/ || true
+          cp -r Docs/images/* webapp/dist/images/ || true
           echo "✅ Dining hall images copied to build directory"
           ls -la webapp/dist/images/ || true
 
-      - name: Copy dining hall images into Docs/images
-        run: |
-          mkdir -p Docs/images
-          cp -r Frontend/flutter_easyeats/assets/images/* Docs/images/ || true
-          echo "✅ Dining hall images copied to Docs/images"
-          ls -la Docs/images/ || true
+      # (Redundant image copy step removed as images are already in Docs/images)
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

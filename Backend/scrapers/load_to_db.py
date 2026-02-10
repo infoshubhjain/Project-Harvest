@@ -242,7 +242,7 @@ if __name__ == "__main__":
 
         if not excel_files:
             print("No Excel files found in current directory")
-            print("\nUsage: python load_to_database.py [excel_file.xlsx]")
+            print("\nUsage: python load_to_db.py [excel_file.xlsx]")
             sys.exit(1)
 
         # Use most recently modified Excel file

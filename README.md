@@ -1,32 +1,76 @@
-# Group 16
-Group Name: EasyEats
+# Project Harvest 🧺
 
-[MVP Link](https://docs.google.com/document/d/1n2sEw29xoNncvHaEHSYoNxiD-2LiDbUD/edit?usp=sharing&ouid=113213851535479613252&rtpof=true&sd=true)
+Project Harvest is a comprehensive dining hall nutrition tracking ecosystem designed for university students. It provides real-time access to dining hall menus, full nutritional breakdowns, and automated data collection from campus dining services.
 
-Team Members: cicizhu2, jaylonw2, warrenh2, sdiaz66, mihirsd2
+## 🚀 Overview
 
-Project Manager: speru4
+The project consists of three main components:
+1.  **Web Dashboard**: A modern, responsive React-based web application for browsing daily menus and tracking nutritional intake.
+2.  **Robust Scraper Engine**: A Python-based automation suite that extracts daily menu and nutrition data from university dining portals.
+3.  **Unified API Layer**: A collection of static JSON endpoints and a Node.js companion for efficient data delivery.
 
-## Deploying the Flutter web app
-The repo contains a Flutter app at `Frontend/flutter_easyeats` that can be built for web and deployed to GitHub Pages via a GitHub Actions workflow. See `Frontend/flutter_easyeats/GH-PAGES-DEPLOY.md` for details.
+## ✨ Key Features
 
-Note: The React webapp now loads dining hall images from repository-hosted assets by default and includes a fallback to avoid external hotlinking issues. The Python scraper uses `webdriver-manager` to simplify ChromeDriver setup.
+- **Real-Time Menus**: View what's being served at all university dining halls (ISR, PAR, LAR, Ikenberry, etc.).
+- **Detailed Nutrition**: Access calories, protein, fats, carbohydrates, and allergen information for every dish.
+- **Smart Filtering**: Filter menus by meal type (Breakfast, Lunch, Dinner) and category.
+- **Automated Collection**: Daily scrapers ensure the data is always fresh without manual intervention.
+- **Mobile-First Design**: Fully responsive web interface optimized for students on the go.
 
-Testing and CI:
-- **Single Command Start:** The easiest way to run the project. This handles setup, builds, and serving checks automatically.
-  ```bash
-  npm start
-  ```
-  *(Or `./start.sh` if you prefer shell scripts)*
+## 🛠️ Technology Stack
 
-- **Manual Setup:**
-  ```bash
-  ./setup_dev.sh
-  ```
-- Use `pytest` in `Backend/scrapers` to run selector playback tests and simple remote checks:
-	```bash
-	cd Backend/scrapers
-	# (Dependencies installed via setup_dev.sh)
-	pytest -q
-	```
-- The new workflow `validate-api.yml` will validate `Docs/api` JSON files on every push/PR and will attempt a quick test scrape + export if invalid files are detected.
+### Frontend
+- **React 18** & **Vite**: Powering the modern, fast user interface.
+- **Pure CSS**: Handcrafted styles for a sleek, glassmorphic aesthetic.
+- **GitHub Pages**: Automated CI/CD deployment.
+
+### Backend & Automation
+- **Python**: Core scraping logic using `webdriver-manager` and `Selenium`.
+- **Node.js & Express**: API utility layer for data management.
+- **SQLite**: Local data storage before export to front-end JSON.
+- **GitHub Actions**: Automated daily scraping and deployment pipeline.
+
+## 🏃 Getting Started
+
+### Prerequisites
+- Node.js (v16+)
+- Python (v3.9+)
+- Chrome Browser (for scrapers)
+
+### Quick Setup
+
+1. **Initialize the project**:
+   ```bash
+   npm run setup
+   ```
+
+2. **Run the web application**:
+   ```bash
+   cd webapp
+   npm install
+   npm run dev
+   ```
+
+3. **Run a test scrape**:
+   ```bash
+   npm run scrape:today
+   ```
+
+## 📂 Repository Structure
+
+- `webapp/`: The React-based frontend dashboard.
+- `Backend/`: The scraper engine and API management logic.
+  - `scrapers/`: Python scripts for data collection.
+  - `data/`: Local SQLite database and JSON exports.
+- `Docs/`: API documentation and static JSON endpoints.
+- `.github/workflows/`: Automation pipelines for scraping and deployment.
+
+## 🔄 Development Workflow
+
+- **Scraping**: Run `npm run scrape` to update local data.
+- **API Validation**: The `validate-api.yml` workflow ensures all exported JSON data is compliant with the frontend schema.
+- **Deployment**: Any push to the `master` branch triggers the `deploy-react.yml` workflow, rebuilding the webapp and updating the live site.
+
+---
+
+*Part of the EasyEats initiative - Project Harvest.*
