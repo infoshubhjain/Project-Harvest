@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 const API_BASE = import.meta.env.DEV
-  ? '/api'
+  ? '/Project-Harvest/api'
   : 'https://infoshubhjain.github.io/Project-Harvest/api'
 
 // For meal-plan requests which need the backend server
@@ -397,6 +397,7 @@ function MealBuilder({ diningHall, onBack }) {
 function App() {
   const [diningHalls, setDiningHalls] = useState([])
   const [selectedHall, setSelectedHall] = useState(null)
+  const [mealBuilderHall, setMealBuilderHall] = useState(null)
   const [menuItems, setMenuItems] = useState([])
   const [filteredItems, setFilteredItems] = useState([])
   const [availableDates, setAvailableDates] = useState([])
