@@ -60,6 +60,14 @@ app.get('/api/meal-plan', (req, res) => {
         args.push('--date', req.query.date);
     }
 
+    if (req.query.vegetarian === 'true') {
+        args.push('--vegetarian');
+    }
+
+    if (req.query.vegan === 'true') {
+        args.push('--vegan');
+    }
+
     // Spawn Python process
     // Note: Using 'python3' - make sure it's in the path
     const pythonProcess = spawn('python3', args);

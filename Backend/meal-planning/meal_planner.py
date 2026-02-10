@@ -121,6 +121,43 @@ class MealPlanner:
 
         return categories
 
+    def filter_by_dietary_restrictions(self, items_df, vegetarian=False, vegan=False):
+        """
+        Filter items based on dietary restrictions
+        """
+        if not vegetarian and not vegan:
+            return items_df
+
+        # Keywords to exclude
+        meat_keywords = [
+            'chicken', 'beef', 'pork', 'turkey', 'fish', 'salmon', 'tuna', 
+            'shrimp', 'crab', 'lobster', 'lamb', 'veal', 'bacon', 'ham', 
+            'sausage', 'pepperoni', 'salami', 'steak', 'burger', 'meatball', 
+            'wings', 'clams', 'oyster'
+        ]
+        
+        # Additional dairy/egg keywords for vegan
+        dairy_egg_keywords = [
+            'milk', 'cheese', 'cream', 'yogurt', 'butter', 'egg', 'whey', 
+            'casein', 'honey', 'mayonnaise', 'gelato', 'custard', 'alfredo',
+            'ranch', 'caesar'
+        ]
+        
+        filtered = items_df.copy()
+        
+        # 1. Filter out meat (for both Veg and Vegan)
+        pattern = '|'.join(meat_keywords)
+        filtered = filtered[~filtered['name'].str.contains(pattern, case=False, na=False)]
+        filtered = filtered[~filtered['category'].str.contains('Meat|Fish|Poultry', case=False, na=False)]
+        
+        # 2. Filter out dairy/eggs (for Vegan only)
+        if vegan:
+            pattern_vegan = '|'.join(dairy_egg_keywords)
+            filtered = filtered[~filtered['name'].str.contains(pattern_vegan, case=False, na=False)]
+            filtered = filtered[~filtered['category'].str.contains('Dairy|Egg', case=False, na=False)]
+            
+        return filtered
+
     def score_item(self, item, goal_config):
         """
         Score an item based on nutritional value and current goal
@@ -425,7 +462,7 @@ class MealPlanner:
             
         return items # Return original if no improvement
 
-    def create_meal_plan(self, target_calories, dining_hall, meal_type=None, goal='balanced', target_protein=None, date=None):
+    def create_meal_plan(self, target_calories, dining_hall, meal_type=None, goal='balanced', target_protein=None, date=None, vegetarian=False, vegan=False):
         """
         Create an optimized meal plan using Smart Repair algorithm
         """
@@ -437,8 +474,14 @@ class MealPlanner:
         # Get available items
         available_items = self.filter_available_items(dining_hall, meal_type, date)
         
+        # Apply dietary filters
+        available_items = self.filter_by_dietary_restrictions(available_items, vegetarian, vegan)
+        
         if len(available_items) == 0:
-            return {'error': f'No items found for {dining_hall} - {meal_type} on {date if date else "any date"}'}
+            diet_msg = ""
+            if vegan: diet_msg = " (Vegan)"
+            elif vegetarian: diet_msg = " (Vegetarian)"
+            return {'error': f'No items found for {dining_hall} - {meal_type} on {date if date else "any date"}{diet_msg}'}
 
         # Categorize (save as class member for smart_repair to use)
         self.categories = self.categorize_items(available_items)
@@ -513,6 +556,7 @@ class MealPlanner:
             'dining_hall': dining_hall,
             'meal_type': meal_type,
             'date': date,
+            'dietary': 'Vegan' if vegan else ('Vegetarian' if vegetarian else 'Standard'),
             'target_calories': target_calories,
             'goal': goal_config['desc'],
             'actual_calories': round(total_calories, 1),
@@ -557,6 +601,8 @@ if __name__ == "__main__":
     parser.add_argument('--meal', type=str)
     parser.add_argument('--goal', type=str, default='balanced', choices=['balanced', 'weight_loss', 'bulking', 'keto'])
     parser.add_argument('--date', type=str, help='Filter by date (e.g. "Friday, February 13, 2026")')
+    parser.add_argument('--vegetarian', action='store_true', help='Vegetarian only')
+    parser.add_argument('--vegan', action='store_true', help='Vegan only')
     parser.add_argument('--db', type=str, default=default_db)
     parser.add_argument('--json', action='store_true')
     
@@ -569,7 +615,9 @@ if __name__ == "__main__":
         meal_type=args.meal,
         goal=args.goal,
         target_protein=args.protein,
-        date=args.date
+        date=args.date,
+        vegetarian=args.vegetarian,
+        vegan=args.vegan
     )
 
     if args.json:

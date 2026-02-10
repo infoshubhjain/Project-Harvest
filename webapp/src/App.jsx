@@ -52,6 +52,8 @@ function MealBuilder({ diningHall, onBack }) {
   const [error, setError] = useState(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [mealPlan, setMealPlan] = useState(null)
+  const [isVegetarian, setIsVegetarian] = useState(false)
+  const [isVegan, setIsVegan] = useState(false)
 
   // Initialize meal type based on current time
   useEffect(() => {
@@ -161,7 +163,9 @@ function MealBuilder({ diningHall, onBack }) {
         protein: protVal.toString(),
         goal: goal,
         meal_type: mealType,
-        date: selectedDate !== 'All' ? selectedDate : ''
+        date: selectedDate !== 'All' ? selectedDate : '',
+        vegetarian: isVegetarian.toString(),
+        vegan: isVegan.toString()
       })
 
       const fetchUrl = `${BACKEND_API}/meal-plan?${params}`
@@ -261,6 +265,36 @@ function MealBuilder({ diningHall, onBack }) {
                   {type}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label>🥦 Dietary Preferences</label>
+            <div className="dietary-toggles" style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+              <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.95rem' }}>
+                <input
+                  type="checkbox"
+                  checked={isVegetarian}
+                  onChange={(e) => {
+                    setIsVegetarian(e.target.checked)
+                    if (e.target.checked) setIsVegan(false)
+                  }}
+                  style={{ marginRight: '8px', width: '18px', height: '18px', accentColor: '#4a7c59' }}
+                />
+                Vegetarian
+              </label>
+              <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.95rem' }}>
+                <input
+                  type="checkbox"
+                  checked={isVegan}
+                  onChange={(e) => {
+                    setIsVegan(e.target.checked)
+                    if (e.target.checked) setIsVegetarian(false)
+                  }}
+                  style={{ marginRight: '8px', width: '18px', height: '18px', accentColor: '#4a7c59' }}
+                />
+                Vegan
+              </label>
             </div>
           </div>
 
@@ -458,8 +492,16 @@ function App() {
       setMenuItems(data.foods || [])
       setFilteredItems(data.foods || [])
 
-      // Extract unique dates
+      // Extract unique dates and sort them
       const dates = [...new Set((data.foods || []).map(item => item.date))]
+
+      // Sort dates chronologically
+      dates.sort((a, b) => {
+        const dateA = new Date(a)
+        const dateB = new Date(b)
+        return dateA - dateB
+      })
+
       setAvailableDates(dates)
       if (dates.length > 0) {
         setSelectedDate(dates[0]) // Default to most recent date
