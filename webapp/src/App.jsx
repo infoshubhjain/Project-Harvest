@@ -51,6 +51,9 @@ function MealBuilder({ diningHall, onBack }) {
   const [isVegetarian, setIsVegetarian] = useState(false)
   const [isVegan, setIsVegan] = useState(false)
 
+  const [availableDates, setAvailableDates] = useState([])
+  const [menuItems, setMenuItems] = useState([])
+
   // Initialize meal type based on current time
   useEffect(() => {
     const hour = new Date().getHours()
@@ -58,6 +61,32 @@ function MealBuilder({ diningHall, onBack }) {
     else if (hour < 15) setMealType('Lunch')
     else setMealType('Dinner')
   }, [])
+
+  // Fetch menu data on mount to populate dates
+  useEffect(() => {
+    async function fetchMenuData() {
+      try {
+        const filename = diningHall.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
+        const response = await fetch(`${API_BASE}/${filename}.json`)
+        if (!response.ok) throw new Error('Could not load menu data')
+        const data = await response.json()
+        const items = data.foods || []
+        setMenuItems(items)
+
+        // Extract and sort dates
+        const dates = [...new Set(items.map(item => item.date))]
+        dates.sort((a, b) => new Date(a) - new Date(b))
+
+        setAvailableDates(dates)
+        if (dates.length > 0) {
+          setSelectedDate(dates[0])
+        }
+      } catch (e) {
+        console.error('Failed to load menu data in builder:', e)
+      }
+    }
+    fetchMenuData()
+  }, [diningHall])
 
   // --- CLient-Side Meal Logic ---
 
@@ -140,17 +169,20 @@ function MealBuilder({ diningHall, onBack }) {
   async function generateMealPlanLocal(targetCals, targetProt, currentMealType, currentGoal) {
     console.log('Running robust client-side meal generator...')
 
-    // 1. Fetch menu data
-    let items = []
-    try {
-      const filename = diningHall.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
-      const response = await fetch(`${API_BASE}/${filename}.json`)
-      if (!response.ok) throw new Error('Could not load menu data')
-      const data = await response.json()
-      items = data.foods || []
-    } catch (e) {
-      console.error('Local generation failed:', e)
-      throw new Error('Could not load menu data. Please check your internet connection.')
+    // 1. Use pre-fetched items if available (otherwise verify fetch)
+    let items = menuItems
+    if (items.length === 0) {
+      // Fallback fetch if somehow empty (shouldn't happen with useEffect)
+      try {
+        const filename = diningHall.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
+        const response = await fetch(`${API_BASE}/${filename}.json`)
+        if (!response.ok) throw new Error('Could not load menu data')
+        const data = await response.json()
+        items = data.foods || []
+      } catch (e) {
+        console.error('Local generation failed:', e)
+        throw new Error('Could not load menu data. Please check your internet connection.')
+      }
     }
 
     // 2. Filter by meal type, date, and dietary restrictions
@@ -341,6 +373,21 @@ function MealBuilder({ diningHall, onBack }) {
                 onChange={(e) => setProtein(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label>📅 Select Date</label>
+            <select
+              className="date-select"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+            >
+              {availableDates.length === 0 && <option value="">Loading dates...</option>}
+              {availableDates.map(date => (
+                <option key={date} value={date}>{date}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
