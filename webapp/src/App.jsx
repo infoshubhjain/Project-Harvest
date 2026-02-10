@@ -4,10 +4,6 @@ const API_BASE = import.meta.env.DEV
   ? '/Project-Harvest/api'
   : 'https://infoshubhjain.github.io/Project-Harvest/api'
 
-// For meal-plan requests which need the backend server
-const BACKEND_API = import.meta.env.DEV
-  ? '/api'
-  : 'https://project-harvest-backend.onrender.com/api'
 
 // Use repository images hosted on GitHub raw to ensure availability
 const BASE_IMAGES_URL = import.meta.env.DEV
@@ -63,69 +59,198 @@ function MealBuilder({ diningHall, onBack }) {
     else setMealType('Dinner')
   }, [])
 
-  async function generateMealPlanLocal(targetCals, targetProt, currentMealType, currentGoal) {
-    console.log('Running client-side meal generator fallback...')
+  // --- CLient-Side Meal Logic ---
 
-    // 1. Fetch menu data if we don't have it
+  // Dietary Constants
+  const MEAT_KEYWORDS = [
+    'chicken', 'beef', 'pork', 'turkey', 'fish', 'salmon', 'tuna',
+    'shrimp', 'crab', 'lobster', 'lamb', 'veal', 'bacon', 'ham',
+    'sausage', 'pepperoni', 'salami', 'steak', 'burger', 'meatball',
+    'wings', 'clams', 'oyster'
+  ]
+
+  const DAIRY_EGG_KEYWORDS = [
+    'milk', 'cheese', 'cream', 'yogurt', 'butter', 'egg', 'whey',
+    'casein', 'honey', 'mayonnaise', 'gelato', 'custard', 'alfredo',
+    'ranch', 'caesar'
+  ]
+
+  function filterByDietaryRestrictions(items, vegetarian, vegan) {
+    if (!vegetarian && !vegan) return items
+
+    return items.filter(item => {
+      const name = (item.name || '').toLowerCase()
+      const category = (item.category || '').toLowerCase()
+
+      // 1. Filter out meat (for both Veg and Vegan)
+      const hasMeat = MEAT_KEYWORDS.some(keyword => name.includes(keyword)) ||
+        /meat|fish|poultry/.test(category)
+      if (hasMeat) return false
+
+      // 2. Filter out dairy/eggs (for Vegan only)
+      if (vegan) {
+        const hasDairyEgg = DAIRY_EGG_KEYWORDS.some(keyword => name.includes(keyword)) ||
+          /dairy|egg/.test(category)
+        if (hasDairyEgg) return false
+      }
+
+      return true
+    })
+  }
+
+  function calculateScore(items, targetCals, targetProt, currentGoal) {
+    const totalCals = items.reduce((sum, i) => sum + (i.calories || 0), 0)
+    const totalProt = items.reduce((sum, i) => sum + (i.protein || 0), 0)
+    const totalFat = items.reduce((sum, i) => sum + (i.total_fat || 0), 0)
+    const totalCarbs = items.reduce((sum, i) => sum + (i.total_carbohydrate || 0), 0)
+
+    if (totalCals === 0) return -1000
+
+    // 1. Calorie Score (how close to target) - Primary Factor
+    const calDiffPercent = Math.abs(totalCals - targetCals) / targetCals
+    const calScore = Math.max(0, 100 - (calDiffPercent * 200))
+
+    // 2. Protein Score
+    const protDiffPercent = Math.abs(totalProt - targetProt) / targetProt
+    const protScore = Math.max(0, 100 - (protDiffPercent * 200))
+
+    // 3. Goal Alignment (Macro Ratios)
+    const goalConfig = {
+      balanced: { p: 0.30, f: 0.30, c: 0.40 },
+      weight_loss: { p: 0.40, f: 0.25, c: 0.35 },
+      bulking: { p: 0.30, f: 0.20, c: 0.50 },
+      keto: { p: 0.25, f: 0.70, c: 0.05 },
+    }[currentGoal] || { p: 0.30, f: 0.30, c: 0.40 }
+
+    const pRatio = (totalProt * 4) / totalCals
+    const fRatio = (totalFat * 9) / totalCals
+    const cRatio = (totalCarbs * 4) / totalCals
+
+    const dist = Math.sqrt(
+      Math.pow(pRatio - goalConfig.p, 2) +
+      Math.pow(fRatio - goalConfig.f, 2) +
+      Math.pow(cRatio - goalConfig.c, 2)
+    )
+    const macroScore = Math.max(0, 100 - (dist * 200))
+
+    // Weighted Score
+    return (calScore * 0.4) + (protScore * 0.3) + (macroScore * 0.3)
+  }
+
+  async function generateMealPlanLocal(targetCals, targetProt, currentMealType, currentGoal) {
+    console.log('Running robust client-side meal generator...')
+
+    // 1. Fetch menu data
     let items = []
     try {
       const filename = diningHall.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
       const response = await fetch(`${API_BASE}/${filename}.json`)
-      if (!response.ok) throw new Error('Could not load menu for local generation')
+      if (!response.ok) throw new Error('Could not load menu data')
       const data = await response.json()
       items = data.foods || []
     } catch (e) {
-      console.error('Local generation failed to load data:', e)
-      throw new Error('Could not load menu data for offline generation.')
+      console.error('Local generation failed:', e)
+      throw new Error('Could not load menu data. Please check your internet connection.')
     }
 
-    // 2. Filter by meal type and selected date
-    const dateToFilter = selectedDate || (items.length > 0 ? items[0].date : '')
-    const pool = items.filter(item =>
+    // 2. Filter by meal type, date, and dietary restrictions
+    const dateToFilter = selectedDate !== 'All' ? selectedDate : (items.length > 0 ? items[0].date : '')
+
+    let pool = items.filter(item =>
       item.meal_type === currentMealType &&
-      (!dateToFilter || item.date === dateToFilter)
+      (!dateToFilter || item.date === dateToFilter) &&
+      (item.calories > 0) // Basic sanity check
     )
 
+    // Apply Dietary Filters
+    pool = filterByDietaryRestrictions(pool, isVegetarian, isVegan)
+
     if (pool.length === 0) {
-      throw new Error(`No items found for ${currentMealType} on ${dateToFilter} at this dining hall.`)
+      const dietMsg = isVegan ? ' (Vegan)' : (isVegetarian ? ' (Vegetarian)' : '')
+      throw new Error(`No items found for ${currentMealType} on ${dateToFilter}${dietMsg}.`)
     }
 
-    // 3. Simple greedy randomized selection
-    let selected = []
-    let currentCals = 0
-    let currentProt = 0
-    let currentCarbs = 0
-    let currentFat = 0
+    // 3. Monte Carlo Optimization
+    // Generate 50 random combinations and pick the best one
+    const POPULATION_SIZE = 50
+    let bestMeal = null
+    let bestScore = -Infinity
 
-    // Shuffle the pool for variety
-    const shuffled = [...pool].sort(() => Math.random() - 0.5)
+    // Categorize for better randomization
+    const categories = {
+      protein: pool.filter(i => /protein|chicken|beef|pork|fish|egg|tofu/i.test(i.category || '') || i.protein > 15),
+      carbs: pool.filter(i => /grain|rice|pasta|bread|potato/i.test(i.category || '')),
+      veg: pool.filter(i => /vegetable|salad|green/i.test(i.category || '')),
+      other: pool
+    }
 
-    // Pick items until we hit ~target calories
-    for (const item of shuffled) {
-      const itemCals = item.calories || 0
-      if (currentCals + itemCals <= targetCals + 50) {
-        selected.push({
-          name: item.name,
-          category: item.category || 'N/A',
-          servings: 1,
-          calories: item.calories || 0,
-          protein: item.protein || 0,
-          carbs: item.total_carbohydrate || 0,
-          fat: item.total_fat || 0
-        })
+    for (let i = 0; i < POPULATION_SIZE; i++) {
+      let currentItems = []
+      let currentCals = 0
+
+      // Try to build a balanced meal structure first
+      // 1. Main Protein
+      if (categories.protein.length > 0 && Math.random() > 0.1) {
+        const item = categories.protein[Math.floor(Math.random() * categories.protein.length)]
+        currentItems.push(item)
         currentCals += item.calories || 0
-        currentProt += item.protein || 0
-        currentCarbs += item.total_carbohydrate || 0
-        currentFat += item.total_fat || 0
       }
-      if (currentCals >= targetCals - 50) break
+
+      // 2. Base Carb
+      if (categories.carbs.length > 0 && Math.random() > 0.2) {
+        const item = categories.carbs[Math.floor(Math.random() * categories.carbs.length)]
+        if (!currentItems.includes(item)) {
+          currentItems.push(item)
+          currentCals += item.calories || 0
+        }
+      }
+
+      // 3. Fill the rest randomly
+      let attempts = 0
+      while (currentCals < targetCals * 0.9 && attempts < 10) {
+        const item = pool[Math.floor(Math.random() * pool.length)]
+        if (!currentItems.includes(item)) {
+          if (currentCals + (item.calories || 0) <= targetCals * 1.2) {
+            currentItems.push(item)
+            currentCals += item.calories || 0
+          }
+        }
+        attempts++
+      }
+
+      // Score this combination
+      const score = calculateScore(currentItems, targetCals, targetProt, currentGoal)
+
+      if (score > bestScore) {
+        bestScore = score
+        bestMeal = currentItems
+      }
     }
 
-    if (selected.length === 0) {
-      throw new Error('Could not build a meal within the calorie limit.')
+    if (!bestMeal || bestMeal.length === 0) {
+      // Fallback if Monte Carlo fails (unlikely, but safe)
+      bestMeal = [pool[0]]
     }
 
-    const totalMacros = currentProt * 4 + currentCarbs * 4 + currentFat * 9
+    // Calculate final totals
+    const finalItems = bestMeal.map(item => ({
+      name: item.name,
+      category: item.category || 'N/A',
+      servings: 1,
+      calories: item.calories || 0,
+      protein: item.protein || 0,
+      carbs: item.total_carbohydrate || 0,
+      fat: item.total_fat || 0
+    }))
+
+    const totals = finalItems.reduce((acc, item) => ({
+      calories: acc.calories + item.calories,
+      protein: acc.protein + item.protein,
+      carbs: acc.carbs + item.carbs,
+      fat: acc.fat + item.fat
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+
+    const totalMacros = totals.protein * 4 + totals.carbs * 4 + totals.fat * 9
 
     return {
       dining_hall: diningHall,
@@ -133,19 +258,16 @@ function MealBuilder({ diningHall, onBack }) {
       target_calories: targetCals,
       target_protein: targetProt,
       goal: GOALS[currentGoal]?.label || currentGoal,
-      items: selected,
+      items: finalItems,
       totals: {
-        calories: currentCals,
-        protein: currentProt,
-        carbs: currentCarbs,
-        fat: currentFat,
-        protein_percent: totalMacros > 0 ? Math.round((currentProt * 4 / totalMacros) * 100) : 0,
-        carb_percent: totalMacros > 0 ? Math.round((currentCarbs * 4 / totalMacros) * 100) : 0,
-        fat_percent: totalMacros > 0 ? Math.round((currentFat * 9 / totalMacros) * 100) : 0
+        ...totals,
+        protein_percent: totalMacros > 0 ? Math.round((totals.protein * 4 / totalMacros) * 100) : 0,
+        carb_percent: totalMacros > 0 ? Math.round((totals.carbs * 4 / totalMacros) * 100) : 0,
+        fat_percent: totalMacros > 0 ? Math.round((totals.fat * 9 / totalMacros) * 100) : 0
       },
-      meets_target: Math.abs(currentCals - targetCals) < 100,
-      meets_protein_target: currentProt >= targetProt - 5,
-      is_offline: true
+      meets_target: Math.abs(totals.calories - targetCals) < (targetCals * 0.15),
+      meets_protein_target: totals.protein >= targetProt * 0.8,
+      is_offline: false // It's technically "online" via GitHub Pages now!
     }
   }
 
@@ -157,40 +279,9 @@ function MealBuilder({ diningHall, onBack }) {
       const calVal = parseInt(calories) || 600
       const protVal = parseInt(protein) || 40
 
-      const params = new URLSearchParams({
-        calories: calVal.toString(),
-        dining_hall: diningHall,
-        protein: protVal.toString(),
-        goal: goal,
-        meal_type: mealType,
-        date: selectedDate !== 'All' ? selectedDate : '',
-        vegetarian: isVegetarian.toString(),
-        vegan: isVegan.toString()
-      })
-
-      const fetchUrl = `${BACKEND_API}/meal-plan?${params}`
-      console.log('Fetching meal plan from:', fetchUrl)
-
-      let data
-      try {
-        const response = await fetch(fetchUrl)
-
-        if (!response.ok) {
-          let errorMsg = 'Failed to generate meal plan'
-          try {
-            const errData = await response.json()
-            errorMsg = errData.error || errorMsg
-          } catch (e) {
-            errorMsg = `Error ${response.status}: ${response.statusText}`
-          }
-          throw new Error(errorMsg)
-        }
-
-        data = await response.json()
-      } catch (fetchErr) {
-        console.warn('Backend fetch failed, falling back to local generator:', fetchErr)
-        data = await generateMealPlanLocal(calVal, protVal, mealType, goal)
-      }
+      // Directly use the robust client-side generator
+      // This makes the app "Serverless" and hostable anywhere
+      const data = await generateMealPlanLocal(calVal, protVal, mealType, goal)
 
       if (data.error) {
         throw new Error(data.error)
