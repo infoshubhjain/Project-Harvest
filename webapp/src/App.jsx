@@ -160,7 +160,8 @@ function MealBuilder({ diningHall, onBack }) {
         dining_hall: diningHall,
         protein: protVal.toString(),
         goal: goal,
-        meal_type: mealType
+        meal_type: mealType,
+        date: selectedDate !== 'All' ? selectedDate : ''
       })
 
       const fetchUrl = `${BACKEND_API}/meal-plan?${params}`

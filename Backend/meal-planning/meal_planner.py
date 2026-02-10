@@ -353,9 +353,81 @@ class MealPlanner:
         else:
             return (cal_score * 0.4) + (macro_score * 0.5) + (div_score * 0.1)
 
-    def create_meal_plan(self, target_calories, dining_hall, meal_type=None, goal='balanced', target_protein=None):
+    def smart_repair(self, items, target_calories, goal_config, target_protein=None):
         """
-        Create an optimized meal plan using Randomized Search
+        Iteratively improve a meal by swapping the 'worst' item for a better one
+        """
+        current_items = items.copy()
+        
+        # calculate current state
+        total_cals = sum(i['calories'] for i in current_items)
+        total_prot = sum(i['protein'] for i in current_items)
+        
+        # Identify what we need
+        cal_diff = target_calories - total_cals
+        prot_diff = (target_protein - total_prot) if target_protein else 0
+        
+        # Decide what to swap out (worst item)
+        # If we have too many calories, remove high cal item
+        # If we have too few, remove low cal item (to replace with bigger one)
+        # If we need protein, remove low protein item
+        
+        worst_item_idx = -1
+        best_swap_score = -float('inf')
+        
+        # Heuristic to pick item to remove
+        if total_cals > target_calories * 1.1:
+            # Remove highest calorie item
+            worst_item_idx = max(range(len(current_items)), key=lambda i: current_items[i]['calories'])
+        elif target_protein and total_prot < target_protein * 0.9:
+            # Remove lowest protein item
+            worst_item_idx = min(range(len(current_items)), key=lambda i: current_items[i]['protein'])
+        else:
+            # Randomly pick one to change
+            worst_item_idx = random.randint(0, len(current_items) - 1)
+            
+        removed_item = current_items.pop(worst_item_idx)
+        
+        # Find best replacement from available categories
+        # We can try adding an item from any category
+        candidates = []
+        for cat in ['protein', 'carbs', 'vegetables', 'other']:
+            if not self.categories[cat].empty:
+                sample = self.categories[cat].sample(n=min(5, len(self.categories[cat])))
+                for idx, row in sample.iterrows():
+                    item = row.to_dict()
+                    item['servings'] = 1.0
+                    candidates.append(item)
+                    
+        best_replacement = None
+        best_new_score = -float('inf')
+        
+        # Try swaps
+        for cand in candidates:
+            # Skip if already in meal
+            if any(i['name'] == cand['name'] for i in current_items):
+                continue
+                
+            test_meal = current_items + [cand]
+            
+            # Quick optimize servings for test
+            test_meal = self.optimize_servings(test_meal, target_calories)
+            
+            score = self.evaluate_meal(test_meal, target_calories, goal_config, target_protein)
+            
+            if score > best_new_score:
+                best_new_score = score
+                best_replacement = cand
+                
+        if best_replacement and best_new_score > self.evaluate_meal(items, target_calories, goal_config, target_protein):
+            current_items.append(best_replacement)
+            return self.optimize_servings(current_items, target_calories)
+            
+        return items # Return original if no improvement
+
+    def create_meal_plan(self, target_calories, dining_hall, meal_type=None, goal='balanced', target_protein=None, date=None):
+        """
+        Create an optimized meal plan using Smart Repair algorithm
         """
         if meal_type is None:
             meal_type = self.get_current_meal_type()
@@ -363,39 +435,54 @@ class MealPlanner:
         goal_config = self.GOALS.get(goal, self.GOALS['balanced'])
         
         # Get available items
-        available_items = self.filter_available_items(dining_hall, meal_type)
+        available_items = self.filter_available_items(dining_hall, meal_type, date)
         
         if len(available_items) == 0:
-            return {'error': f'No items found for {dining_hall} - {meal_type}'}
+            return {'error': f'No items found for {dining_hall} - {meal_type} on {date if date else "any date"}'}
 
-        # Categorize
-        categories = self.categorize_items(available_items)
+        # Categorize (save as class member for smart_repair to use)
+        self.categories = self.categorize_items(available_items)
+        categories = self.categories # local ref for generate_random_meal
         
         best_meal = None
         best_score = -float('inf')
         
-        # Randomized Search (Monte Carlo)
-        # Generate 50 random valid meals, score them, pick best
-        for _ in range(50):
-            # 1. Generate random items
+        # 1. Generate initial population (Random Search)
+        population = []
+        for _ in range(20):
             items_df = self.generate_random_meal(categories, target_calories, goal_config)
-            
-            # 2. Convert to list of dicts for processing
             items_list = []
             for row in items_df:
                 item_dict = row.to_dict()
-                item_dict['servings'] = 1.0 # Initialize servings
+                item_dict['servings'] = 1.0
                 items_list.append(item_dict)
             
-            # 3. Optimize servings to hit calorie target
-            optimized_items = self.optimize_servings(items_list, target_calories)
-            
-            # 4. Score with protein target if specified
-            score = self.evaluate_meal(optimized_items, target_calories, goal_config, target_protein)
+            optimized = self.optimize_servings(items_list, target_calories)
+            score = self.evaluate_meal(optimized, target_calories, goal_config, target_protein)
+            population.append({'items': optimized, 'score': score})
             
             if score > best_score:
                 best_score = score
-                best_meal = optimized_items
+                best_meal = optimized
+
+        # 2. Smart Repair (Evolutionary Improvement)
+        # Take the top 5 meals and try to improve them iteratively
+        population.sort(key=lambda x: x['score'], reverse=True)
+        top_candidates = [m['items'] for m in population[:5]]
+        
+        for candidate in top_candidates:
+            current_meal = candidate
+            # 50 iterations of improvement per candidate
+            for _ in range(50):
+                new_meal = self.smart_repair(current_meal, target_calories, goal_config, target_protein)
+                new_score = self.evaluate_meal(new_meal, target_calories, goal_config, target_protein)
+                
+                if new_score > self.evaluate_meal(current_meal, target_calories, goal_config, target_protein):
+                    current_meal = new_meal
+                
+                if new_score > best_score:
+                    best_score = new_score
+                    best_meal = new_meal
 
         # Final formatting
         total_calories = sum(i['calories'] for i in best_meal)
@@ -425,6 +512,7 @@ class MealPlanner:
         result = {
             'dining_hall': dining_hall,
             'meal_type': meal_type,
+            'date': date,
             'target_calories': target_calories,
             'goal': goal_config['desc'],
             'actual_calories': round(total_calories, 1),
@@ -444,7 +532,7 @@ class MealPlanner:
         # Add protein target info if specified
         if target_protein:
             result['target_protein'] = target_protein
-            result['meets_protein_target'] = abs(total_protein - target_protein) < (target_protein * 0.2)
+            result['meets_protein_target'] = abs(total_protein - target_protein) < (target_protein * 0.1) # Stricter check
         
         return result
 
@@ -468,6 +556,7 @@ if __name__ == "__main__":
     parser.add_argument('--hall', type=str, default='ISR')
     parser.add_argument('--meal', type=str)
     parser.add_argument('--goal', type=str, default='balanced', choices=['balanced', 'weight_loss', 'bulking', 'keto'])
+    parser.add_argument('--date', type=str, help='Filter by date (e.g. "Friday, February 13, 2026")')
     parser.add_argument('--db', type=str, default=default_db)
     parser.add_argument('--json', action='store_true')
     
@@ -479,7 +568,8 @@ if __name__ == "__main__":
         dining_hall=args.hall,
         meal_type=args.meal,
         goal=args.goal,
-        target_protein=args.protein
+        target_protein=args.protein,
+        date=args.date
     )
 
     if args.json:

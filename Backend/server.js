@@ -56,6 +56,10 @@ app.get('/api/meal-plan', (req, res) => {
         args.push('--protein', protein);
     }
 
+    if (req.query.date) {
+        args.push('--date', req.query.date);
+    }
+
     // Spawn Python process
     // Note: Using 'python3' - make sure it's in the path
     const pythonProcess = spawn('python3', args);
