@@ -1014,8 +1014,29 @@ class NutritionScraperComplete:
 
                                 if date_element and not self.select_date(date_element):
                                     break
+                                
+                                # CRITICAL FIX: Re-fetch meal elements because the page reloaded
+                                # The elements in structured_meals are now stale.
+                                # We need to find the element at the current next index (meal_idx + 1)
+                                new_meals = self.get_all_meals_structured()
+                                if new_meals and len(new_meals) > meal_idx + 1:
+                                    # Update the element in the list for the NEXT iteration
+                                    # We can't update the current 'meal_info' variable since we are at end of loop
+                                    # But we can update the list that the loop is iterating over? 
+                                    # No, modifying list while iterating is risky.
+                                    # Better: The loop receives 'meal_info' from the iterator.
+                                    # We need to ensure the NEXT iteration gets the fresh element.
+                                    
+                                    # Actually, since we just re-fetched 'new_meals', we can start a fresh loop? 
+                                    # No, we are inside the loop.
+                                    
+                                    # Strategy: Update the 'element' property of the remaining items in structured_meals
+                                    for k in range(meal_idx + 1, len(structured_meals)):
+                                        if k < len(new_meals):
+                                            structured_meals[k]['element'] = new_meals[k]['element']
+                                            
                             except Exception as e:
-                                print(f"Error reselecting date: {str(e)}")
+                                print(f"Error reselecting date/meals: {str(e)}")
                                 break
 
                     # After finishing all meals for this date, navigate back for next date
