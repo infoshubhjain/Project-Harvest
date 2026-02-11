@@ -916,51 +916,116 @@ class NutritionScraperComplete:
                     print(f"Date {date_idx}/{len(target_dates)}: {date_str}")
                     print(f"{'='*60}")
 
-                    # Find and select this date (refresh the element each time to avoid stale elements)
-                    try:
-                        date_selector = self.driver.find_element(By.ID, "nav-date-selector")
-                        date_items = date_selector.find_elements(By.CSS_SELECTOR, "a.dropdown-item")
-
-                        # Find the matching date element
-                        date_element = None
-                        for item in date_items:
-                            if item.get_attribute('data-date') == data_date:
-                                date_element = item
-                                break
-
-                        if not date_element:
-                            print(f"Could not find date element for: {date_str}")
-                            continue
-
-                        # Select this date
-                        if not self.select_date(date_element):
-                            print(f"Failed to select date: {date_str}")
-                            continue
-
-                    except Exception as e:
-                        print(f"Error finding/selecting date: {str(e)}")
+                    # 1. First pass: Navigate and get the list of meals (names/types) for this date
+                    # We do this to know WHAT to scrape, but we won't keep the elements
+                    if not self.navigate_to_service(service_id, service_name):
                         continue
+                    
+                    try:
+                        # Find and click the date
+                        date_selector = self.wait.until(EC.presence_of_element_located((By.ID, "nav-date-selector")))
+                        # Use JS to click the specific date
+                        # We use a CSS selector with the data-date attribute to find it reliably
+                        date_script = f"""
+                        var items = document.querySelectorAll('a.dropdown-item[data-date="{data_date}"]');
+                        if (items.length > 0) {{
+                            items[0].click();
+                            return true;
+                        }}
+                        return false;
+                        """
+                        found_date = self.driver.execute_script(date_script)
+                        
+                        if not found_date:
+                            print(f"Could not find/select date: {date_str}")
+                            continue
+                            
+                        # Wait for results
+                        self.wait.until(EC.presence_of_element_located((By.ID, "navBarResults")))
+                        time.sleep(1)
+                        
+                        # Get the meal structure (just to get the types/counts)
+                        structured_meals_metadata = self.get_all_meals_structured()
+                        
+                        if not structured_meals_metadata:
+                            print(f"No meals found for {date_str}")
+                            continue
 
-                    # Get all meals for this date
-                    structured_meals = self.get_all_meals_structured()
-
-                    if not structured_meals:
-                        print(f"No meals found for {date_str}")
+                        # Extract meal types to iterate over
+                        # We use a list of unique identifiers (e.g. index or meal_type + index)
+                        # to target them in the main loop
+                        meal_definitions = []
+                        for idx, m in enumerate(structured_meals_metadata):
+                            meal_definitions.append({
+                                'index': idx,
+                                'type': m['meal_type'],
+                                'date_text': m['date']
+                            })
+                            
+                    except Exception as e:
+                        print(f"Error preparing meal list for {date_str}: {e}")
                         continue
 
                     # Testing mode: limit number of meals per day
                     if self.testing_mode:
                         print(f"[TESTING MODE] Limiting to first meal period only")
-                        structured_meals = structured_meals[:1]  # Only process first meal
+                        meal_definitions = meal_definitions[:1]
 
-                    for meal_idx, meal_info in enumerate(structured_meals):
-                        if not meal_info['element']:
+                    # 2. Main Loop: Iterate through each meal definition
+                    # For EACH meal, we start from a clean state (Navigate -> Select Date)
+                    # This is slower but much more robust than trying to navigate back/forth
+                    for meal_def in meal_definitions:
+                        meal_idx = meal_def['index']
+                        meal_name = meal_def['type']
+                        
+                        print(f"\n[Meal {meal_idx + 1}/{len(meal_definitions)}]")
+                        print(f"Date: {date_str}, Meal: {meal_name}")
+
+                        # A. Reset State: Navigate to Service
+                        # Optimization: If it's the very first meal of the first loop, we technically are there, 
+                        # but consistency is key for debugging.
+                        if not self.navigate_to_service(service_id, service_name):
+                            print(f"Failed to navigate to service for {meal_name}")
+                            break # Move to next service if we can't even get there
+
+                        # B. Select Date
+                        try:
+                            # Re-run the date selection script
+                            found_date = self.driver.execute_script(date_script)
+                            if not found_date:
+                                print(f"Could not re-select date for {meal_name}")
+                                continue
+                            
+                            # Wait for results
+                            self.wait.until(EC.presence_of_element_located((By.ID, "navBarResults")))
+                            time.sleep(1)
+                            
+                        except Exception as e:
+                            print(f"Error selecting date for {meal_name}: {e}")
+                            continue
+                        
+                        # C. Get Fresh Elements
+                        current_meals = self.get_all_meals_structured()
+                        
+                        if meal_idx >= len(current_meals):
+                            print(f"Meal index {meal_idx} out of range (found {len(current_meals)} meals)")
+                            continue
+                            
+                        target_meal_info = current_meals[meal_idx]
+                        
+                        # Verify we are matched up (sanity check)
+                        if target_meal_info['meal_type'] != meal_name:
+                            print(f"Warning: Meal type mismatch. Expected {meal_name}, found {target_meal_info['meal_type']}")
+                            # Continue anyway, or search for the type? 
+                            # Trusting index is usually safer if list order is stable.
+                        
+                        if not target_meal_info['element']:
+                            print("No element for meal")
                             continue
 
-                        print(f"\n[Meal {meal_idx + 1}/{len(structured_meals)}]")
-                        print(f"Date: {meal_info['date']}, Meal: {meal_info['meal_type']}")
-
-                        if not self.click_meal(meal_info['element']):
+                        # D. Click & Scrape
+                        if not self.click_meal(target_meal_info['element']):
+                            print(f"Failed to click {meal_name}")
                             continue
 
                         # Extract nutrition info
@@ -974,9 +1039,9 @@ class NutritionScraperComplete:
                             result = {
                                 'dining_hall': hall_name,
                                 'service': service_name,
-                                'date': meal_info['date'],
-                                'meal_type': meal_info['meal_type'],
-                                'category': category,  # Category column shows what type of food
+                                'date': target_meal_info['date'], # Use the fresh date from the element
+                                'meal_type': target_meal_info['meal_type'],
+                                'category': category,
                                 'name': item_data['name'],
                                 'serving_size': item_data.get('serving_size'),
                                 'calories': self.parse_nutrition_value(item_data.get('nutrition', {}).get('calories', '0')),
@@ -994,56 +1059,6 @@ class NutritionScraperComplete:
                             all_results.append(result)
 
                         print(f"Stored nutrition for {len(nutrition_items)} items")
-
-                        # Navigate back for next meal within the same date
-                        if meal_idx < len(structured_meals) - 1:
-                            print("Navigating back to service for next meal...")
-                            if not self.navigate_to_service(service_id, service_name):
-                                break
-
-                            # Re-find and reselect the same date
-                            try:
-                                date_selector = self.driver.find_element(By.ID, "nav-date-selector")
-                                date_items = date_selector.find_elements(By.CSS_SELECTOR, "a.dropdown-item")
-
-                                date_element = None
-                                for item in date_items:
-                                    if item.get_attribute('data-date') == data_date:
-                                        date_element = item
-                                        break
-
-                                if date_element and not self.select_date(date_element):
-                                    break
-                                
-                                # CRITICAL FIX: Re-fetch meal elements because the page reloaded
-                                # The elements in structured_meals are now stale.
-                                # We need to find the element at the current next index (meal_idx + 1)
-                                new_meals = self.get_all_meals_structured()
-                                if new_meals and len(new_meals) > meal_idx + 1:
-                                    # Update the element in the list for the NEXT iteration
-                                    # We can't update the current 'meal_info' variable since we are at end of loop
-                                    # But we can update the list that the loop is iterating over? 
-                                    # No, modifying list while iterating is risky.
-                                    # Better: The loop receives 'meal_info' from the iterator.
-                                    # We need to ensure the NEXT iteration gets the fresh element.
-                                    
-                                    # Actually, since we just re-fetched 'new_meals', we can start a fresh loop? 
-                                    # No, we are inside the loop.
-                                    
-                                    # Strategy: Update the 'element' property of the remaining items in structured_meals
-                                    for k in range(meal_idx + 1, len(structured_meals)):
-                                        if k < len(new_meals):
-                                            structured_meals[k]['element'] = new_meals[k]['element']
-                                            
-                            except Exception as e:
-                                print(f"Error reselecting date/meals: {str(e)}")
-                                break
-
-                    # After finishing all meals for this date, navigate back for next date
-                    if date_idx < len(target_dates):
-                        print(f"\nFinished {date_str}, preparing for next date...")
-                        if not self.navigate_to_service(service_id, service_name):
-                            break
         
         print(f"\n{'='*80}")
         print("Complete scraping finished!")
