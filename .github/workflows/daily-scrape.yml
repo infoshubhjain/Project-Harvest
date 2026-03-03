@@ -2,8 +2,12 @@ name: Daily Dining Hall Data Scrape
 
 on:
   schedule:
-    # Run at 2:00 AM CST daily (8:00 AM UTC)
-    - cron: '0 8 * * *'
+    # Target 8:00 AM America/Chicago.
+    # GitHub Actions cron is UTC-only, so use seasonal UTC offsets:
+    # - 14:00 UTC ~= 8:00 AM CST (roughly Nov-Feb)
+    # - 13:00 UTC ~= 8:00 AM CDT (roughly Mar-Oct)
+    - cron: '0 14 * 1,2,11,12 *'
+    - cron: '0 13 * 3-10 *'
   workflow_dispatch: # Allow manual trigger
     inputs:
       testing:
@@ -51,7 +55,7 @@ jobs:
           if [ "${{ github.event.inputs.save_snapshots }}" = 'true' ]; then
             SAVESNAP='--save-snapshots'
           fi
-          python3 nutrition_scraper.py $TESTING $SAVESNAP
+          python3 nutrition_scraper.py --days 5 $TESTING $SAVESNAP
         timeout-minutes: 60
 
       - name: Load scraped data into database

@@ -22,8 +22,8 @@ ENV/
 *~
 
 # Backend - Nutrition Scraper Output
-backend/nutrition-scraper/*.xlsx
-!backend/nutrition-scraper/example_output.xlsx
+Backend/scrapers/*.xlsx
+!Backend/scrapers/example_output.xlsx
 
 # Logs
 *.log

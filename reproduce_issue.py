@@ -2,10 +2,9 @@
 import os
 import sys
 # Add the directory containing nutrition_scraper.py to the Python path
-sys.path.append(os.path.join(os.path.dirname('__file__'), 'Backend/scrapers'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'Backend/scrapers'))
 
 from nutrition_scraper import NutritionScraperComplete
-import time
 
 def reproduce_issue():
     scraper = NutritionScraperComplete(headless=True)

@@ -256,7 +256,7 @@ class NutritionScraperComplete:
             return False
 
     @retry_on_exception(max_attempts=3, backoff=2)
-    def get_available_dates_for_next_n_days(self, n_days=7):
+    def get_available_dates_for_next_n_days(self, n_days=5):
         """Get available dates from the date selector dropdown for the next n days (including today)"""
         try:
             print(f"\nGetting available dates for next {n_days} days...")
@@ -853,11 +853,11 @@ class NutritionScraperComplete:
         except:
             return "0"
     
-    def scrape_all_with_complete_data(self, days_to_scrape=7):
+    def scrape_all_with_complete_data(self, days_to_scrape=5):
         """Scrape all dining halls with nutrition info for the next n days (including today)
 
         Args:
-            days_to_scrape: Number of days to scrape (default: 7, including today)
+            days_to_scrape: Number of days to scrape (default: 5, including today)
         """
         all_results = []
 
@@ -873,11 +873,11 @@ class NutritionScraperComplete:
 
         # Testing mode limitations
         if self.testing_mode:
-            print("\n[TESTING MODE] Limiting to first dining hall, first service, and first 2 days")
+            print("\n[TESTING MODE] Limiting to first dining hall, first service, and first 5 days")
             dining_halls = dining_halls[:1]  # Only first dining hall
             if dining_halls and dining_halls[0]['dining_services']:
                 dining_halls[0]['dining_services'] = dining_halls[0]['dining_services'][:1]  # Only first service
-            days_to_scrape = min(days_to_scrape, 2)  # Limit to 2 days in testing mode
+            days_to_scrape = min(days_to_scrape, 5)  # Limit to 5 days in testing mode
 
         for hall in dining_halls:
             hall_name = hall['dining_hall']
@@ -1182,7 +1182,7 @@ if __name__ == "__main__":
     parser.add_argument('--no-headless', dest='headless', action='store_false', help='Run Chrome with UI (for debugging)')
     parser.add_argument('--save-snapshots', action='store_true', help='Save page snapshots for debugging when selectors fail')
     parser.add_argument('--playback', type=str, help='Playback mode: provide a directory of HTML snapshots to use instead of live scraping')
-    parser.add_argument('--days', type=int, default=7, help='Number of days to scrape (default: 7)')
+    parser.add_argument('--days', type=int, default=5, help='Number of days to scrape (default: 5, including today)')
     parser.set_defaults(headless=True)
     args = parser.parse_args()
 

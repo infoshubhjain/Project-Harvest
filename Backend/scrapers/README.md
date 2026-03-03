@@ -19,8 +19,9 @@ pip install -r requirements.txt
 
 ```bash
 python3 check_scraper_setup.py  # --no-headless to run with UI for debugging
+```
 
-4. Run tests and playback checks
+3. Run tests and playback checks
 
 ```bash
 cd Backend/scrapers
@@ -28,7 +29,7 @@ pip install -r requirements.txt
 pytest -q tests
 ```
 
-5. Save snapshots for debugging
+4. Save snapshots for debugging
 
 You can enable automatic snapshot saving with `--save-snapshots` so that the scraper saves HTML pages to `Backend/scrapers/snapshots` when selectors fail. Use `--playback` to load these saved snapshots for fast testing with playback mode.
 
@@ -39,9 +40,8 @@ python3 nutrition_scraper.py --save-snapshots --testing
 # Playback from previously saved snapshots
 python3 nutrition_scraper.py --playback Backend/scrapers/snapshots --testing
 ```
-```
 
-3. Run the full scraper (day-long run, takes time):
+5. Run the full scraper (day-long run, takes time):
 
 ```bash
 python3 nutrition_scraper.py --testing     # run with testing mode (faster)

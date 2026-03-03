@@ -38,6 +38,37 @@ const GOALS = {
   keto: { label: '🥑 Keto', desc: 'Low carb' },
 }
 
+const UPCOMING_DAYS = 5
+
+function parseMenuDate(dateStr) {
+  if (!dateStr) return null
+  const parsed = new Date(`${dateStr} 00:00:00`)
+  if (Number.isNaN(parsed.getTime())) return null
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+}
+
+function getUpcomingDates(items, days = UPCOMING_DAYS) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const endDate = new Date(today)
+  endDate.setDate(today.getDate() + (days - 1))
+
+  return [...new Set(items.map(item => item.date).filter(Boolean))]
+    .map(raw => ({ raw, parsed: parseMenuDate(raw) }))
+    .filter(({ parsed }) => parsed && parsed >= today && parsed <= endDate)
+    .sort((a, b) => a.parsed - b.parsed)
+    .map(({ raw }) => raw)
+}
+
+function getSortedDates(items) {
+  return [...new Set(items.map(item => item.date).filter(Boolean))]
+    .map(raw => ({ raw, parsed: parseMenuDate(raw) }))
+    .filter(({ parsed }) => parsed)
+    .sort((a, b) => a.parsed - b.parsed)
+    .map(({ raw }) => raw)
+}
+
 // Meal Builder Component
 function MealBuilder({ diningHall, onBack }) {
   const [calories, setCalories] = useState('600')
@@ -73,9 +104,9 @@ function MealBuilder({ diningHall, onBack }) {
         const items = data.foods || []
         setMenuItems(items)
 
-        // Extract and sort dates
-        const dates = [...new Set(items.map(item => item.date))]
-        dates.sort((a, b) => new Date(a) - new Date(b))
+        // Prefer today + next 4 days, fallback to all available dates
+        const upcomingDates = getUpcomingDates(items)
+        const dates = upcomingDates.length > 0 ? upcomingDates : getSortedDates(items)
 
         setAvailableDates(dates)
         if (dates.length > 0) {
@@ -630,19 +661,13 @@ function App() {
       setMenuItems(data.foods || [])
       setFilteredItems(data.foods || [])
 
-      // Extract unique dates and sort them
-      const dates = [...new Set((data.foods || []).map(item => item.date))]
-
-      // Sort dates chronologically
-      dates.sort((a, b) => {
-        const dateA = new Date(a)
-        const dateB = new Date(b)
-        return dateA - dateB
-      })
+      // Prefer today + next 4 days, fallback to all available dates
+      const upcomingDates = getUpcomingDates(data.foods || [])
+      const dates = upcomingDates.length > 0 ? upcomingDates : getSortedDates(data.foods || [])
 
       setAvailableDates(dates)
       if (dates.length > 0) {
-        setSelectedDate(dates[0]) // Default to most recent date
+        setSelectedDate(dates[0]) // Default to the nearest available date
       } else {
         setSelectedDate('All')
       }
