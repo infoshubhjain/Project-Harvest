@@ -954,8 +954,15 @@ class NutritionScraperComplete:
                         # Extract meal types to iterate over
                         # We use a list of unique identifiers (e.g. index or meal_type + index)
                         # to target them in the main loop
+                        # Deduplicate repeated menu groups (common in "build your own" services)
+                        # to avoid excessive re-navigation and driver instability.
                         meal_definitions = []
+                        seen_meals = set()
                         for idx, m in enumerate(structured_meals_metadata):
+                            meal_key = (m.get('date', ''), m.get('meal_type', ''))
+                            if meal_key in seen_meals:
+                                continue
+                            seen_meals.add(meal_key)
                             meal_definitions.append({
                                 'index': idx,
                                 'type': m['meal_type'],

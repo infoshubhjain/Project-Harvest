@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.path.join(os.getcwd(), 'Backend/scrapers'))
 
 from nutrition_scraper import NutritionScraperComplete
-from datetime import datetime
+import argparse
 
 class FastScraper(NutritionScraperComplete):
     def scrape_dining_structure(self):
@@ -13,7 +13,12 @@ class FastScraper(NutritionScraperComplete):
         all_halls = super().scrape_dining_structure()
         
         # Filter for relevant halls that user complained about
-        targets = ["Pennsylvania Avenue Dining Hall (PAR)", "Lincoln Avenue Dining Hall (LAR)", "Ikenberry Dining Center (Ike)"]
+        targets = [
+            "Pennsylvania Avenue Dining Hall (PAR)",
+            "Lincoln Avenue Dining Hall (LAR)",
+            "Ikenberry Dining Center (Ike)",
+            "Illinois Street Dining Center (ISR)",
+        ]
         
         filtered = [h for h in all_halls if h['dining_hall'] in targets]
         
@@ -21,13 +26,16 @@ class FastScraper(NutritionScraperComplete):
         return filtered
 
 if __name__ == "__main__":
-    # Run headless
-    scraper = FastScraper(headless=True)
+    parser = argparse.ArgumentParser(description="Targeted scraper for main dining halls.")
+    parser.add_argument("--days", type=int, default=5, help="Number of days to scrape (default: 5)")
+    parser.add_argument("--no-headless", dest="headless", action="store_false", help="Run Chrome with UI")
+    parser.set_defaults(headless=True)
+    args = parser.parse_args()
+
+    scraper = FastScraper(headless=args.headless)
     try:
-        # 1 Day is enough for verification
-        days = 1
-        print(f"Starting Fast Scraper for {days} day(s)...")
-        results = scraper.scrape_all_with_complete_data(days_to_scrape=days)
+        print(f"Starting Fast Scraper for {args.days} day(s)...")
+        results = scraper.scrape_all_with_complete_data(days_to_scrape=args.days)
         
         if results:
              print("Exporting results...")
