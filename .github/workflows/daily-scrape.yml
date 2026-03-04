@@ -56,7 +56,7 @@ jobs:
             SAVESNAP='--save-snapshots'
           fi
           python3 nutrition_scraper.py --days 5 $TESTING $SAVESNAP
-        timeout-minutes: 60
+        timeout-minutes: 150
 
       - name: Load scraped data into database
         run: |
