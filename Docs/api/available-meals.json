@@ -2,46 +2,6 @@
   "meals": [
     {
       "meal_type": "Beverages",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Breakfast",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Cereal",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Condiments",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Deli & Bagel Bar",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Dinner",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Ice Cream",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Lunch",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Salad Bar",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Waffle Bar",
-      "date": "Wednesday, March 4, 2026"
-    },
-    {
-      "meal_type": "Beverages",
       "date": "Thursday, March 5, 2026"
     },
     {
@@ -159,6 +119,46 @@
     {
       "meal_type": "Waffle Bar",
       "date": "Saturday, March 7, 2026"
+    },
+    {
+      "meal_type": "Beverages",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Cereal",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Condiments",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Deli & Bagel Bar",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Ice Cream",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Salad Bar",
+      "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Waffle Bar",
+      "date": "Monday, March 9, 2026"
     },
     {
       "meal_type": "Beverages",
@@ -202,5 +202,5 @@
     }
   ],
   "count": 50,
-  "last_updated": "2026-03-04T20:32:41.457334"
+  "last_updated": "2026-03-05T16:25:37.520679"
 }
