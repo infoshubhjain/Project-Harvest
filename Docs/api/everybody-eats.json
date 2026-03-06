@@ -13,7 +13,7 @@
       "sugars": 0.0,
       "sodium": 0.01,
       "meal_type": "Breakfast",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "Oatmeal",
@@ -27,7 +27,21 @@
       "sugars": 0.0,
       "sodium": 0.01,
       "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
+    },
+    {
+      "name": "Roasted Red Pepper & Gouda Soup",
+      "category": "Daily Menu",
+      "serving_size": "Cup (240g)",
+      "calories": 300.0,
+      "protein": 7.0,
+      "total_fat": 22.0,
+      "total_carbohydrate": 18.0,
+      "dietary_fiber": 4.0,
+      "sugars": 13.0,
+      "sodium": 0.9,
+      "meal_type": "Dinner",
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "Seedless Raisins",
@@ -41,49 +55,21 @@
       "sugars": 21.0,
       "sodium": 0.0,
       "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
-      "name": "Broccoli Cheese Soup",
+      "name": "Tomato Bisque",
       "category": "Soups",
-      "serving_size": "12oz Cup (355g)",
-      "calories": 250.0,
-      "protein": 12.0,
-      "total_fat": 15.0,
-      "total_carbohydrate": 19.0,
-      "dietary_fiber": 1.0,
-      "sugars": 7.0,
-      "sodium": 1.68,
-      "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
-    },
-    {
-      "name": "Cream of Tomato Soup",
-      "category": "Soups",
-      "serving_size": "1 Cup (219g)",
-      "calories": 130.0,
-      "protein": 6.0,
-      "total_fat": 2.5,
-      "total_carbohydrate": 22.0,
+      "serving_size": "1 Cup (227g)",
+      "calories": 110.0,
+      "protein": 2.0,
+      "total_fat": 8.0,
+      "total_carbohydrate": 11.0,
       "dietary_fiber": 0.0,
-      "sugars": 15.0,
-      "sodium": 0.46,
+      "sugars": 6.0,
+      "sodium": 0.21,
       "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
-    },
-    {
-      "name": "Illinois-Grown White Rice",
-      "category": "Starches",
-      "serving_size": "1/2 Cup (92g)",
-      "calories": 120.0,
-      "protein": 5.0,
-      "total_fat": 0.0,
-      "total_carbohydrate": 26.0,
-      "dietary_fiber": 0.0,
-      "sugars": 0.0,
-      "sodium": 0.0,
-      "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "White Rice",
@@ -97,7 +83,7 @@
       "sugars": 0.0,
       "sodium": 0.0,
       "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "Brown Sugar",
@@ -111,7 +97,7 @@
       "sugars": 12.0,
       "sodium": 0.0,
       "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "Oatmeal",
@@ -125,7 +111,21 @@
       "sugars": 0.0,
       "sodium": 0.01,
       "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
+    },
+    {
+      "name": "Roasted Red Pepper & Gouda Soup",
+      "category": "Daily Menu",
+      "serving_size": "Cup (240g)",
+      "calories": 300.0,
+      "protein": 7.0,
+      "total_fat": 22.0,
+      "total_carbohydrate": 18.0,
+      "dietary_fiber": 4.0,
+      "sugars": 13.0,
+      "sodium": 0.9,
+      "meal_type": "Lunch",
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "Seedless Raisins",
@@ -139,49 +139,21 @@
       "sugars": 21.0,
       "sodium": 0.0,
       "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
-      "name": "Broccoli Cheese Soup",
+      "name": "Tomato Bisque",
       "category": "Soups",
-      "serving_size": "12oz Cup (355g)",
-      "calories": 250.0,
-      "protein": 12.0,
-      "total_fat": 15.0,
-      "total_carbohydrate": 19.0,
-      "dietary_fiber": 1.0,
-      "sugars": 7.0,
-      "sodium": 1.68,
-      "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
-    },
-    {
-      "name": "Cream of Tomato Soup",
-      "category": "Soups",
-      "serving_size": "1 Cup (219g)",
-      "calories": 130.0,
-      "protein": 6.0,
-      "total_fat": 2.5,
-      "total_carbohydrate": 22.0,
+      "serving_size": "1 Cup (227g)",
+      "calories": 110.0,
+      "protein": 2.0,
+      "total_fat": 8.0,
+      "total_carbohydrate": 11.0,
       "dietary_fiber": 0.0,
-      "sugars": 15.0,
-      "sodium": 0.46,
+      "sugars": 6.0,
+      "sodium": 0.21,
       "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
-    },
-    {
-      "name": "Illinois-Grown White Rice",
-      "category": "Starches",
-      "serving_size": "1/2 Cup (92g)",
-      "calories": 120.0,
-      "protein": 5.0,
-      "total_fat": 0.0,
-      "total_carbohydrate": 26.0,
-      "dietary_fiber": 0.0,
-      "sugars": 0.0,
-      "sodium": 0.0,
-      "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "White Rice",
@@ -195,7 +167,7 @@
       "sugars": 0.0,
       "sodium": 0.0,
       "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "Brown Sugar",
@@ -209,7 +181,7 @@
       "sugars": 12.0,
       "sodium": 0.0,
       "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
+      "date": "Tuesday, March 10, 2026"
     },
     {
       "name": "Bio Bowl Paper Soup Cup 12oz",
@@ -1024,6 +996,6 @@
       "date": "Friday, March 6, 2026"
     }
   ],
-  "count": 73,
-  "last_updated": "2026-03-05T16:25:37.431217"
+  "count": 71,
+  "last_updated": "2026-03-06T16:20:39.690391"
 }
