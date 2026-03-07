@@ -7,10 +7,13 @@ from datetime import datetime
 
 # Paths
 db_path = Path(__file__).parent / 'data' / 'nutrition_data.db'
-output_dir = Path(__file__).parent.parent / 'Docs' / 'api'
+docs_api_dir = Path(__file__).parent.parent / 'Docs' / 'api'
+webapp_api_dir = Path(__file__).parent.parent / 'webapp' / 'public' / 'api'
+output_dirs = [docs_api_dir, webapp_api_dir]
 
-# Create output directory
-output_dir.mkdir(parents=True, exist_ok=True)
+# Create output directories
+for out_dir in output_dirs:
+    out_dir.mkdir(parents=True, exist_ok=True)
 
 print('Exporting database to JSON files...')
 
@@ -23,8 +26,9 @@ cursor = conn.cursor()
 cursor.execute('SELECT DISTINCT dining_hall FROM nutrition_data ORDER BY dining_hall')
 halls = [row['dining_hall'] for row in cursor.fetchall()]
 
-with open(output_dir / 'dining-halls.json', 'w') as f:
-    json.dump({'dining_halls': halls, 'count': len(halls), 'last_updated': datetime.now().isoformat()}, f, indent=2)
+for out_dir in output_dirs:
+    with open(out_dir / 'dining-halls.json', 'w') as f:
+        json.dump({'dining_halls': halls, 'count': len(halls), 'last_updated': datetime.now().isoformat()}, f, indent=2)
 print(f'✓ Exported {len(halls)} dining halls')
 
 # Export foods for each dining hall
@@ -50,22 +54,26 @@ for hall in halls:
         'last_updated': datetime.now().isoformat()  # Set at export time
     }
 
-    with open(output_dir / filename, 'w') as f:
-        json.dump(output, f, indent=2)
+    for out_dir in output_dirs:
+        with open(out_dir / filename, 'w') as f:
+            json.dump(output, f, indent=2)
     print(f'✓ Exported {len(foods)} foods for {hall}')
 
 # Export all available meal types and dates
 cursor.execute('SELECT DISTINCT meal_type, date FROM nutrition_data ORDER BY date DESC, meal_type')
 meals = [dict(row) for row in cursor.fetchall()]
 
-with open(output_dir / 'available-meals.json', 'w') as f:
-    json.dump({'meals': meals, 'count': len(meals), 'last_updated': datetime.now().isoformat()}, f, indent=2)
+for out_dir in output_dirs:
+    with open(out_dir / 'available-meals.json', 'w') as f:
+        json.dump({'meals': meals, 'count': len(meals), 'last_updated': datetime.now().isoformat()}, f, indent=2)
 print(f'✓ Exported {len(meals)} available meal times')
 
 conn.close()
 
 print('\n✅ All data exported successfully!')
-print(f'📁 JSON files saved to: {output_dir}')
+print('📁 JSON files saved to:')
+for out_dir in output_dirs:
+    print(f'  - {out_dir}')
 print('\nYour API endpoints will be:')
 print('  https://infoshubhjain.github.io/Project-Harvest/api/dining-halls.json')
 print('  https://infoshubhjain.github.io/Project-Harvest/api/[hall-name].json')

@@ -868,7 +868,7 @@ function App() {
                   <label>Search</label>
                   <input
                     type="text"
-                    placeholder="Try \"banana\" or \"salad\""
+                    placeholder="Try 'banana' or 'salad'"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />

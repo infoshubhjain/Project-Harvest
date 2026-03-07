@@ -35,8 +35,15 @@ import json
 import re
 from functools import wraps
 
+MAIN_DINING_HALLS = [
+    "Pennsylvania Avenue Dining Hall (PAR)",
+    "Lincoln Avenue Dining Hall (LAR)",
+    "Ikenberry Dining Center (Ike)",
+    "Illinois Street Dining Center (ISR)",
+]
+
 class NutritionScraperComplete:
-    def __init__(self, testing_mode=False, headless=True, playback_mode=False):
+    def __init__(self, testing_mode=False, headless=True, playback_mode=False, fast_mode=True):
         """Initialize the scraper with Chrome options
         
         Args:
@@ -74,6 +81,7 @@ class NutritionScraperComplete:
         self.base_url = "https://eatsmart.housing.illinois.edu"
         self.testing_mode = testing_mode
         self.headless = headless
+        self.fast_mode = fast_mode
         self.max_items_per_meal = 5 if testing_mode else None
         self.missed_tasks = []  # queue for tasks that fail and need re-try
         self.debug_dir = os.path.join(os.path.dirname(__file__), 'debug_fragments')
@@ -219,7 +227,12 @@ class NutritionScraperComplete:
             
             if current_hall and current_hall['dining_services']:
                 dining_halls.append(current_hall)
-            
+
+            if self.fast_mode:
+                filtered = [h for h in dining_halls if h['dining_hall'] in MAIN_DINING_HALLS]
+                print(f"\n[FAST MODE] Filtered to {len(filtered)} halls: {[h['dining_hall'] for h in filtered]}")
+                return filtered
+
             return dining_halls
             
         except Exception as e:
@@ -1190,6 +1203,7 @@ if __name__ == "__main__":
     parser.add_argument('--save-snapshots', action='store_true', help='Save page snapshots for debugging when selectors fail')
     parser.add_argument('--playback', type=str, help='Playback mode: provide a directory of HTML snapshots to use instead of live scraping')
     parser.add_argument('--days', type=int, default=5, help='Number of days to scrape (default: 5, including today)')
+    parser.add_argument('--full', action='store_true', help='Full scrape (all dining halls/services)')
     parser.set_defaults(headless=True)
     args = parser.parse_args()
 
@@ -1197,11 +1211,12 @@ if __name__ == "__main__":
     HEADLESS_MODE = args.headless
     SAVE_SNAPSHOTS = args.save_snapshots
     PLAYBACK_DIR = args.playback
+    FAST_MODE = not args.full
     
     # Number of days to scrape (including today)
     DAYS_TO_SCRAPE = args.days
 
-    scraper = NutritionScraperComplete(testing_mode=TESTING_MODE, headless=HEADLESS_MODE)
+    scraper = NutritionScraperComplete(testing_mode=TESTING_MODE, headless=HEADLESS_MODE, fast_mode=FAST_MODE)
     if SAVE_SNAPSHOTS:
         scraper.save_snapshots = True
     if PLAYBACK_DIR:
@@ -1215,8 +1230,12 @@ if __name__ == "__main__":
             print("- Will scrape only 5 items per meal")
             print("- Consider limiting dining halls and meals for faster testing")
         else:
-            print(f"FULL SCRAPING MODE - {DAYS_TO_SCRAPE} Days")
-            print("- Will scrape all dining halls and services")
+            mode_label = "FAST SCRAPE (main halls only)" if FAST_MODE else "FULL SCRAPE (all halls)"
+            print(f"{mode_label} - {DAYS_TO_SCRAPE} Days")
+            if FAST_MODE:
+                print("- Will scrape only main dining halls")
+            else:
+                print("- Will scrape all dining halls and services")
             print("- Will scrape all menu items")
             print(f"- Will scrape menus for the next {DAYS_TO_SCRAPE} days (including today)")
         print("="*80 + "\n")

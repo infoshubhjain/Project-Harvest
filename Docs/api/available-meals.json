@@ -2,46 +2,6 @@
   "meals": [
     {
       "meal_type": "Beverages",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Breakfast",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Cereal",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Condiments",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Deli & Bagel Bar",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Dinner",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Ice Cream",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Lunch",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Salad Bar",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Waffle Bar",
-      "date": "Wednesday, March 11, 2026"
-    },
-    {
-      "meal_type": "Beverages",
       "date": "Tuesday, March 10, 2026"
     },
     {
@@ -82,6 +42,46 @@
     },
     {
       "meal_type": "Beverages",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Cereal",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Condiments",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Deli & Bagel Bar",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Ice Cream",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Salad Bar",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Waffle Bar",
+      "date": "Thursday, March 5, 2026"
+    },
+    {
+      "meal_type": "Beverages",
       "date": "Sunday, March 8, 2026"
     },
     {
@@ -199,8 +199,48 @@
     {
       "meal_type": "Waffle Bar",
       "date": "Monday, March 9, 2026"
+    },
+    {
+      "meal_type": "Beverages",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Cereal",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Condiments",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Deli & Bagel Bar",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Ice Cream",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Salad Bar",
+      "date": "Friday, March 6, 2026"
+    },
+    {
+      "meal_type": "Waffle Bar",
+      "date": "Friday, March 6, 2026"
     }
   ],
-  "count": 50,
-  "last_updated": "2026-03-07T16:05:20.110798"
+  "count": 60,
+  "last_updated": "2026-03-06T03:47:39.748268"
 }
