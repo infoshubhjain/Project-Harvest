@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const API_BASE = import.meta.env.DEV
-  ? '/Project-Harvest/api'
-  : 'https://infoshubhjain.github.io/Project-Harvest/api'
+  ? '/api'
+  : `${import.meta.env.BASE_URL}api`
 
-
-// Use repository images hosted on GitHub raw to ensure availability
 const BASE_IMAGES_URL = import.meta.env.DEV
   ? 'https://infoshubhjain.github.io/Project-Harvest/images'
   : 'https://infoshubhjain.github.io/Project-Harvest/images'
+
 const DINING_HALL_IMAGES = {
   'Illinois Street Dining Center (ISR)': `${BASE_IMAGES_URL}/ISR.jpg`,
   'Ikenberry Dining Center (Ike)': `${BASE_IMAGES_URL}/Ikenberry.jpg`,
@@ -17,13 +16,12 @@ const DINING_HALL_IMAGES = {
 }
 
 const DINING_HALL_INFO = {
-  'Illinois Street Dining Center (ISR)': 'Illinois Street Residence - Main dining room with diverse menu options',
-  'Ikenberry Dining Center (Ike)': 'Largest dining hall on campus with multiple stations',
-  'Lincoln Avenue Dining Hall (LAR)': 'Allen/LAR - Comfortable atmosphere with quality meals',
-  'Pennsylvania Avenue Dining Hall (PAR)': 'Pennsylvania Avenue - Fresh ingredients and healthy choices',
+  'Illinois Street Dining Center (ISR)': 'Bright, social, and fast service near ISR.',
+  'Ikenberry Dining Center (Ike)': 'Largest dining hall with broad station variety.',
+  'Lincoln Avenue Dining Hall (LAR)': 'Cozy atmosphere with classic comfort foods.',
+  'Pennsylvania Avenue Dining Hall (PAR)': 'Fresh ingredients and lighter choices.',
 }
 
-// Only display these main dining halls (filter out "Everybody Eats" etc.)
 const MAIN_DINING_HALLS = [
   'Ikenberry Dining Center (Ike)',
   'Illinois Street Dining Center (ISR)',
@@ -32,13 +30,32 @@ const MAIN_DINING_HALLS = [
 ]
 
 const GOALS = {
-  balanced: { label: '⚖️ Balanced', desc: 'Equal macros' },
-  weight_loss: { label: '🔥 Weight Loss', desc: 'High protein' },
-  bulking: { label: '💪 Bulking', desc: 'High carbs' },
-  keto: { label: '🥑 Keto', desc: 'Low carb' },
+  balanced: { label: 'Balanced', desc: 'Even macros', emoji: '⚖️' },
+  weight_loss: { label: 'Lean & High-Protein', desc: 'Higher protein', emoji: '🥗' },
+  bulking: { label: 'Energy Boost', desc: 'Higher carbs', emoji: '🍚' },
+  keto: { label: 'Low-Carb', desc: 'High fat', emoji: '🥑' },
 }
 
 const UPCOMING_DAYS = 5
+const FAVORITES_KEY = 'ph_favorites_v1'
+
+const MEAT_KEYWORDS = [
+  'chicken', 'beef', 'pork', 'turkey', 'fish', 'salmon', 'tuna',
+  'shrimp', 'crab', 'lobster', 'lamb', 'veal', 'bacon', 'ham',
+  'sausage', 'pepperoni', 'salami', 'steak', 'burger', 'meatball',
+  'wings', 'clams', 'oyster'
+]
+
+const DAIRY_EGG_KEYWORDS = [
+  'milk', 'cheese', 'cream', 'yogurt', 'butter', 'egg', 'whey',
+  'casein', 'honey', 'mayonnaise', 'gelato', 'custard', 'alfredo',
+  'ranch', 'caesar'
+]
+
+const SWEET_KEYWORDS = [
+  'cookie', 'cake', 'brownie', 'pie', 'donut', 'ice cream', 'gelato',
+  'muffin', 'pudding', 'sweet', 'candy'
+]
 
 function parseMenuDate(dateStr) {
   if (!dateStr) return null
@@ -69,11 +86,68 @@ function getSortedDates(items) {
     .map(({ raw }) => raw)
 }
 
-// Meal Builder Component
+function formatDateLabel(dateStr) {
+  const parsed = parseMenuDate(dateStr)
+  if (!parsed) return dateStr
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const diffDays = Math.round((parsed - today) / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return `${dateStr} (Today)`
+  if (diffDays === 1) return `${dateStr} (Tomorrow)`
+  return dateStr
+}
+
+function getDietFlags(item) {
+  const name = (item.name || '').toLowerCase()
+  const category = (item.category || '').toLowerCase()
+  const hasMeat = MEAT_KEYWORDS.some(keyword => name.includes(keyword)) ||
+    /meat|fish|poultry/.test(category)
+  const hasDairyEgg = DAIRY_EGG_KEYWORDS.some(keyword => name.includes(keyword)) ||
+    /dairy|egg/.test(category)
+  return {
+    vegetarian: !hasMeat,
+    vegan: !hasMeat && !hasDairyEgg
+  }
+}
+
+function getItemKey(hall, item) {
+  return `${hall}::${item.name || ''}::${item.meal_type || ''}::${item.date || ''}`
+}
+
+function getCategoryGroup(item) {
+  const category = (item.category || '').toLowerCase()
+  const name = (item.name || '').toLowerCase()
+  if (/protein|grill|entree|main|chicken|beef|pork|fish|tofu/.test(category + name)) return 'protein'
+  if (/grain|rice|pasta|bread|potato|noodle|tortilla/.test(category + name)) return 'carb'
+  if (/salad|vegetable|green|produce/.test(category + name)) return 'veg'
+  if (SWEET_KEYWORDS.some(keyword => name.includes(keyword))) return 'sweet'
+  if (/beverage|drink|coffee|tea|juice/.test(category + name)) return 'drink'
+  return 'other'
+}
+
+function clampNumber(value, min, max) {
+  if (Number.isNaN(value)) return min
+  return Math.min(max, Math.max(min, value))
+}
+
+function getFavorites() {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY)
+    if (!raw) return new Set()
+    return new Set(JSON.parse(raw))
+  } catch {
+    return new Set()
+  }
+}
+
+function saveFavorites(set) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...set]))
+}
+
 function MealBuilder({ diningHall, onBack }) {
-  const [calories, setCalories] = useState('600')
+  const [calories, setCalories] = useState('650')
   const [protein, setProtein] = useState('40')
-  const [mealType, setMealType] = useState('Lunch') // Default to Lunch as it usually has most data
+  const [mealType, setMealType] = useState('Lunch')
   const [goal, setGoal] = useState('balanced')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -81,11 +155,12 @@ function MealBuilder({ diningHall, onBack }) {
   const [mealPlan, setMealPlan] = useState(null)
   const [isVegetarian, setIsVegetarian] = useState(false)
   const [isVegan, setIsVegan] = useState(false)
+  const [maxItems, setMaxItems] = useState(5)
+  const [preferVariety, setPreferVariety] = useState(true)
 
   const [availableDates, setAvailableDates] = useState([])
   const [menuItems, setMenuItems] = useState([])
 
-  // Initialize meal type based on current time
   useEffect(() => {
     const hour = new Date().getHours()
     if (hour < 10) setMealType('Breakfast')
@@ -93,7 +168,6 @@ function MealBuilder({ diningHall, onBack }) {
     else setMealType('Dinner')
   }, [])
 
-  // Fetch menu data on mount to populate dates
   useEffect(() => {
     async function fetchMenuData() {
       try {
@@ -104,7 +178,6 @@ function MealBuilder({ diningHall, onBack }) {
         const items = data.foods || []
         setMenuItems(items)
 
-        // Prefer today + next 4 days, fallback to all available dates
         const upcomingDates = getUpcomingDates(items)
         const dates = upcomingDates.length > 0 ? upcomingDates : getSortedDates(items)
 
@@ -119,46 +192,18 @@ function MealBuilder({ diningHall, onBack }) {
     fetchMenuData()
   }, [diningHall])
 
-  // --- CLient-Side Meal Logic ---
-
-  // Dietary Constants
-  const MEAT_KEYWORDS = [
-    'chicken', 'beef', 'pork', 'turkey', 'fish', 'salmon', 'tuna',
-    'shrimp', 'crab', 'lobster', 'lamb', 'veal', 'bacon', 'ham',
-    'sausage', 'pepperoni', 'salami', 'steak', 'burger', 'meatball',
-    'wings', 'clams', 'oyster'
-  ]
-
-  const DAIRY_EGG_KEYWORDS = [
-    'milk', 'cheese', 'cream', 'yogurt', 'butter', 'egg', 'whey',
-    'casein', 'honey', 'mayonnaise', 'gelato', 'custard', 'alfredo',
-    'ranch', 'caesar'
-  ]
-
   function filterByDietaryRestrictions(items, vegetarian, vegan) {
     if (!vegetarian && !vegan) return items
 
     return items.filter(item => {
-      const name = (item.name || '').toLowerCase()
-      const category = (item.category || '').toLowerCase()
-
-      // 1. Filter out meat (for both Veg and Vegan)
-      const hasMeat = MEAT_KEYWORDS.some(keyword => name.includes(keyword)) ||
-        /meat|fish|poultry/.test(category)
-      if (hasMeat) return false
-
-      // 2. Filter out dairy/eggs (for Vegan only)
-      if (vegan) {
-        const hasDairyEgg = DAIRY_EGG_KEYWORDS.some(keyword => name.includes(keyword)) ||
-          /dairy|egg/.test(category)
-        if (hasDairyEgg) return false
-      }
-
+      const flags = getDietFlags(item)
+      if (vegan) return flags.vegan
+      if (vegetarian) return flags.vegetarian
       return true
     })
   }
 
-  function calculateScore(items, targetCals, targetProt, currentGoal) {
+  function calculateScore(items, targetCals, targetProt, currentGoal, maxItemsAllowed) {
     const totalCals = items.reduce((sum, i) => sum + (i.calories || 0), 0)
     const totalProt = items.reduce((sum, i) => sum + (i.protein || 0), 0)
     const totalFat = items.reduce((sum, i) => sum + (i.total_fat || 0), 0)
@@ -166,15 +211,12 @@ function MealBuilder({ diningHall, onBack }) {
 
     if (totalCals === 0) return -1000
 
-    // 1. Calorie Score (how close to target) - Primary Factor
     const calDiffPercent = Math.abs(totalCals - targetCals) / targetCals
-    const calScore = Math.max(0, 100 - (calDiffPercent * 200))
+    const calScore = Math.max(0, 100 - (calDiffPercent * 220))
 
-    // 2. Protein Score
     const protDiffPercent = Math.abs(totalProt - targetProt) / targetProt
-    const protScore = Math.max(0, 100 - (protDiffPercent * 200))
+    const protScore = Math.max(0, 100 - (protDiffPercent * 210))
 
-    // 3. Goal Alignment (Macro Ratios)
     const goalConfig = {
       balanced: { p: 0.30, f: 0.30, c: 0.40 },
       weight_loss: { p: 0.40, f: 0.25, c: 0.35 },
@@ -191,19 +233,20 @@ function MealBuilder({ diningHall, onBack }) {
       Math.pow(fRatio - goalConfig.f, 2) +
       Math.pow(cRatio - goalConfig.c, 2)
     )
-    const macroScore = Math.max(0, 100 - (dist * 200))
+    const macroScore = Math.max(0, 100 - (dist * 220))
 
-    // Weighted Score
-    return (calScore * 0.4) + (protScore * 0.3) + (macroScore * 0.3)
+    const uniqueGroups = new Set(items.map(getCategoryGroup)).size
+    const varietyScore = Math.min(100, uniqueGroups * 20)
+
+    const sizePenalty = Math.max(0, items.length - maxItemsAllowed) * 6
+    const overPenalty = totalCals > targetCals * 1.2 ? 20 : 0
+
+    return (calScore * 0.42) + (protScore * 0.28) + (macroScore * 0.2) + (varietyScore * 0.1) - sizePenalty - overPenalty
   }
 
   async function generateMealPlanLocal(targetCals, targetProt, currentMealType, currentGoal) {
-    console.log('Running robust client-side meal generator...')
-
-    // 1. Use pre-fetched items if available (otherwise verify fetch)
     let items = menuItems
     if (items.length === 0) {
-      // Fallback fetch if somehow empty (shouldn't happen with useEffect)
       try {
         const filename = diningHall.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
         const response = await fetch(`${API_BASE}/${filename}.json`)
@@ -216,16 +259,14 @@ function MealBuilder({ diningHall, onBack }) {
       }
     }
 
-    // 2. Filter by meal type, date, and dietary restrictions
     const dateToFilter = selectedDate !== 'All' ? selectedDate : (items.length > 0 ? items[0].date : '')
 
     let pool = items.filter(item =>
       item.meal_type === currentMealType &&
       (!dateToFilter || item.date === dateToFilter) &&
-      (item.calories > 0) // Basic sanity check
+      (item.calories > 0)
     )
 
-    // Apply Dietary Filters
     pool = filterByDietaryRestrictions(pool, isVegetarian, isVegan)
 
     if (pool.length === 0) {
@@ -233,57 +274,52 @@ function MealBuilder({ diningHall, onBack }) {
       throw new Error(`No items found for ${currentMealType} on ${dateToFilter}${dietMsg}.`)
     }
 
-    // 3. Monte Carlo Optimization
-    // Generate 50 random combinations and pick the best one
-    const POPULATION_SIZE = 50
+    const ranked = [...pool].sort((a, b) => (b.protein || 0) - (a.protein || 0))
+    const seeds = ranked.slice(0, Math.min(8, ranked.length))
+
+    const POPULATION_SIZE = 70
     let bestMeal = null
     let bestScore = -Infinity
 
-    // Categorize for better randomization
-    const categories = {
-      protein: pool.filter(i => /protein|chicken|beef|pork|fish|egg|tofu/i.test(i.category || '') || i.protein > 15),
-      carbs: pool.filter(i => /grain|rice|pasta|bread|potato/i.test(i.category || '')),
-      veg: pool.filter(i => /vegetable|salad|green/i.test(i.category || '')),
-      other: pool
-    }
-
     for (let i = 0; i < POPULATION_SIZE; i++) {
-      let currentItems = []
-      let currentCals = 0
+      const seed = seeds[i % seeds.length] || pool[Math.floor(Math.random() * pool.length)]
+      let currentItems = [seed]
+      let currentCals = seed.calories || 0
 
-      // Try to build a balanced meal structure first
-      // 1. Main Protein
-      if (categories.protein.length > 0 && Math.random() > 0.1) {
-        const item = categories.protein[Math.floor(Math.random() * categories.protein.length)]
-        currentItems.push(item)
-        currentCals += item.calories || 0
-      }
-
-      // 2. Base Carb
-      if (categories.carbs.length > 0 && Math.random() > 0.2) {
-        const item = categories.carbs[Math.floor(Math.random() * categories.carbs.length)]
-        if (!currentItems.includes(item)) {
-          currentItems.push(item)
-          currentCals += item.calories || 0
-        }
-      }
-
-      // 3. Fill the rest randomly
+      const attemptsLimit = 20
       let attempts = 0
-      while (currentCals < targetCals * 0.9 && attempts < 10) {
-        const item = pool[Math.floor(Math.random() * pool.length)]
-        if (!currentItems.includes(item)) {
-          if (currentCals + (item.calories || 0) <= targetCals * 1.2) {
-            currentItems.push(item)
-            currentCals += item.calories || 0
-          }
+      while (currentItems.length < maxItems && attempts < attemptsLimit) {
+        const candidate = pool[Math.floor(Math.random() * pool.length)]
+        if (currentItems.includes(candidate)) {
+          attempts++
+          continue
         }
+
+        const projectedCals = currentCals + (candidate.calories || 0)
+        if (projectedCals > targetCals * 1.25) {
+          attempts++
+          continue
+        }
+
+        currentItems.push(candidate)
+        currentCals = projectedCals
         attempts++
       }
 
-      // Score this combination
-      const score = calculateScore(currentItems, targetCals, targetProt, currentGoal)
+      if (preferVariety) {
+        const grouped = {}
+        currentItems.forEach(item => {
+          const group = getCategoryGroup(item)
+          grouped[group] = grouped[group] ? [...grouped[group], item] : [item]
+        })
+        const varied = []
+        Object.values(grouped).forEach(groupItems => {
+          varied.push(groupItems[Math.floor(Math.random() * groupItems.length)])
+        })
+        currentItems = varied.slice(0, maxItems)
+      }
 
+      const score = calculateScore(currentItems, targetCals, targetProt, currentGoal, maxItems)
       if (score > bestScore) {
         bestScore = score
         bestMeal = currentItems
@@ -291,11 +327,9 @@ function MealBuilder({ diningHall, onBack }) {
     }
 
     if (!bestMeal || bestMeal.length === 0) {
-      // Fallback if Monte Carlo fails (unlikely, but safe)
       bestMeal = [pool[0]]
     }
 
-    // Calculate final totals
     const finalItems = bestMeal.map(item => ({
       name: item.name,
       category: item.category || 'N/A',
@@ -321,6 +355,7 @@ function MealBuilder({ diningHall, onBack }) {
       target_calories: targetCals,
       target_protein: targetProt,
       goal: GOALS[currentGoal]?.label || currentGoal,
+      date: dateToFilter,
       items: finalItems,
       totals: {
         ...totals,
@@ -330,7 +365,8 @@ function MealBuilder({ diningHall, onBack }) {
       },
       meets_target: Math.abs(totals.calories - targetCals) < (targetCals * 0.15),
       meets_protein_target: totals.protein >= targetProt * 0.8,
-      is_offline: false // It's technically "online" via GitHub Pages now!
+      is_offline: false,
+      score: Math.round(bestScore)
     }
   }
 
@@ -339,11 +375,9 @@ function MealBuilder({ diningHall, onBack }) {
       setLoading(true)
       setError(null)
 
-      const calVal = parseInt(calories) || 600
-      const protVal = parseInt(protein) || 40
+      const calVal = clampNumber(parseInt(calories, 10) || 650, 300, 1800)
+      const protVal = clampNumber(parseInt(protein, 10) || 40, 10, 200)
 
-      // Directly use the robust client-side generator
-      // This makes the app "Serverless" and hostable anywhere
       const data = await generateMealPlanLocal(calVal, protVal, mealType, goal)
 
       if (data.error) {
@@ -360,41 +394,46 @@ function MealBuilder({ diningHall, onBack }) {
   }
 
   return (
-    <div>
-      <div className="header">
-        <div className="header-content">
-          <div className="logo">🌾</div>
+    <div className="page">
+      <header className="hero hero--compact">
+        <div className="hero-content">
           <div>
-            <h1>Project Harvest</h1>
-            <p>Build Your Perfect Meal</p>
+            <p className="hero-eyebrow">Meal Builder</p>
+            <h1>Craft a cozy plate in minutes.</h1>
+            <p className="hero-subtitle">Set goals, pick a date, and we do the rest.</p>
           </div>
+          <div className="hero-chip">{diningHall}</div>
         </div>
-      </div>
-      <div className="container">
-        <button className="back-button" onClick={onBack}>
-          <span>←</span> Back to Dining Halls
+      </header>
+
+      <main className="container container--wide">
+        <button className="btn btn-ghost" onClick={onBack}>
+          ← Back to Dining Halls
         </button>
 
-        <div className="meal-builder-header">
-          <h2>🍽️ Meal Builder</h2>
-          <p className="meal-builder-subtitle">{diningHall}</p>
-        </div>
+        <div className="panel panel--lifted">
+          <div className="panel-header">
+            <div>
+              <h2>Build your meal</h2>
+              <p>Personalized for the day and dining hall you choose.</p>
+            </div>
+            <div className="badge">{selectedDate ? formatDateLabel(selectedDate) : 'Loading dates...'}</div>
+          </div>
 
-        <div className="meal-builder-form">
-          <div className="form-row">
+          <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="calories">🔥 Target Calories</label>
+              <label htmlFor="calories">Target Calories</label>
               <input
                 id="calories"
                 type="text"
                 inputMode="numeric"
-                placeholder="e.g. 600"
+                placeholder="e.g. 650"
                 value={calories}
                 onChange={(e) => setCalories(e.target.value)}
               />
             </div>
             <div className="form-group">
-              <label htmlFor="protein">💪 Target Protein (g)</label>
+              <label htmlFor="protein">Target Protein (g)</label>
               <input
                 id="protein"
                 type="text"
@@ -404,115 +443,120 @@ function MealBuilder({ diningHall, onBack }) {
                 onChange={(e) => setProtein(e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label>📅 Select Date</label>
-            <select
-              className="date-select"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-            >
-              {availableDates.length === 0 && <option value="">Loading dates...</option>}
-              {availableDates.map(date => (
-                <option key={date} value={date}>{date}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label>🌅 Meal Type</label>
-            <div className="goal-buttons">
-              {['Breakfast', 'Lunch', 'Dinner'].map(type => (
+            <div className="form-group">
+              <label htmlFor="date">Select Date</label>
+              <select
+                id="date"
+                className="select"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              >
+                {availableDates.length === 0 && <option value="">Loading dates...</option>}
+                {availableDates.map(date => (
+                  <option key={date} value={date}>{formatDateLabel(date)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Meal Type</label>
+              <div className="toggle-row">
+                {['Breakfast', 'Lunch', 'Dinner'].map(type => (
+                  <button
+                    key={type}
+                    className={`chip ${mealType === type ? 'chip--active' : ''}`}
+                    onClick={() => setMealType(type)}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Dietary Preferences</label>
+              <div className="toggle-row">
                 <button
-                  key={type}
-                  className={`goal-button ${mealType === type ? 'active' : ''}`}
-                  onClick={() => setMealType(type)}
+                  className={`chip ${isVegetarian ? 'chip--active' : ''}`}
+                  onClick={() => {
+                    setIsVegetarian(!isVegetarian)
+                    if (!isVegetarian) setIsVegan(false)
+                  }}
                 >
-                  {type === 'Breakfast' ? '🌅 ' : type === 'Lunch' ? '☀️ ' : '🌙 '}
-                  {type}
+                  Vegetarian
                 </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label>🥦 Dietary Preferences</label>
-            <div className="dietary-toggles" style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-              <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.95rem' }}>
-                <input
-                  type="checkbox"
-                  checked={isVegetarian}
-                  onChange={(e) => {
-                    setIsVegetarian(e.target.checked)
-                    if (e.target.checked) setIsVegan(false)
-                  }}
-                  style={{ marginRight: '8px', width: '18px', height: '18px', accentColor: '#4a7c59' }}
-                />
-                Vegetarian
-              </label>
-              <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.95rem' }}>
-                <input
-                  type="checkbox"
-                  checked={isVegan}
-                  onChange={(e) => {
-                    setIsVegan(e.target.checked)
-                    if (e.target.checked) setIsVegetarian(false)
-                  }}
-                  style={{ marginRight: '8px', width: '18px', height: '18px', accentColor: '#4a7c59' }}
-                />
-                Vegan
-              </label>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>🎯 Nutrition Goal</label>
-            <div className="goal-buttons">
-              {Object.entries(GOALS).map(([key, { label, desc }]) => (
                 <button
-                  key={key}
-                  className={`goal-button ${goal === key ? 'active' : ''}`}
-                  onClick={() => setGoal(key)}
-                  title={desc}
+                  className={`chip ${isVegan ? 'chip--active' : ''}`}
+                  onClick={() => {
+                    setIsVegan(!isVegan)
+                    if (!isVegan) setIsVegetarian(false)
+                  }}
                 >
-                  {label}
+                  Vegan
                 </button>
-              ))}
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Max Items</label>
+              <div className="range-wrap">
+                <input
+                  type="range"
+                  min="3"
+                  max="8"
+                  value={maxItems}
+                  onChange={(e) => setMaxItems(parseInt(e.target.value, 10))}
+                />
+                <span>{maxItems} items</span>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Style</label>
+              <div className="toggle-row">
+                {Object.entries(GOALS).map(([key, { label, desc, emoji }]) => (
+                  <button
+                    key={key}
+                    className={`chip ${goal === key ? 'chip--active' : ''}`}
+                    onClick={() => setGoal(key)}
+                    title={desc}
+                  >
+                    {emoji} {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="form-group form-group--full">
+              <label>Variety Boost</label>
+              <div className="toggle-row">
+                <button
+                  className={`chip ${preferVariety ? 'chip--active' : ''}`}
+                  onClick={() => setPreferVariety(!preferVariety)}
+                >
+                  {preferVariety ? 'On' : 'Off'}
+                </button>
+                <span className="hint">Picks a mix of proteins, carbs, veggies, and treats.</span>
+              </div>
             </div>
           </div>
 
-          <button
-            className="generate-button"
-            onClick={generateMealPlan}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-small"></span>
-                Generating...
-              </>
-            ) : (
-              '✨ Generate Meal Plan'
-            )}
+          <button className="btn btn-primary btn-large" onClick={generateMealPlan} disabled={loading}>
+            {loading ? 'Building your plate...' : 'Generate My Meal'}
           </button>
         </div>
 
         {error && (
-          <div className="error-banner">
-            <span>⚠️</span> {error}
+          <div className="alert alert-error">
+            <strong>Heads up:</strong> {error}
           </div>
         )}
 
         {mealPlan && (
-          <div className="meal-plan-results">
+          <div className="panel panel--results">
             <div className="results-header">
-              <h3>Your Personalized Meal</h3>
-              <div className="meal-meta">
-                {mealPlan.is_offline && <span className="meta-badge offline" style={{ backgroundColor: '#666' }}>Offline Mode</span>}
-                <span className="meta-badge">{mealPlan.meal_type}</span>
-                <span className="meta-badge goal">{mealPlan.goal}</span>
+              <div>
+                <h3>Your personalized meal</h3>
+                <p>{mealPlan.date}</p>
+              </div>
+              <div className="score-card">
+                <span>Score</span>
+                <strong>{mealPlan.score}</strong>
               </div>
             </div>
 
@@ -521,64 +565,52 @@ function MealBuilder({ diningHall, onBack }) {
                 <div key={index} className="meal-plan-item">
                   <div className="item-main">
                     <span className="item-servings">{item.servings}×</span>
-                    <span className="item-name">{item.name}</span>
+                    <div>
+                      <p className="item-name">{item.name}</p>
+                      <span className="item-sub">{item.category}</span>
+                    </div>
                   </div>
                   <div className="item-macros">
-                    <span className="macro cal">{Math.round(item.calories)} cal</span>
-                    <span className="macro protein">{Math.round(item.protein)}g P</span>
-                    <span className="macro carbs">{Math.round(item.carbs)}g C</span>
-                    <span className="macro fat">{Math.round(item.fat)}g F</span>
+                    <span className="macro">{Math.round(item.calories)} cal</span>
+                    <span className="macro">{Math.round(item.protein)}g P</span>
+                    <span className="macro">{Math.round(item.carbs)}g C</span>
+                    <span className="macro">{Math.round(item.fat)}g F</span>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="meal-totals">
-              <h4>📊 Meal Totals</h4>
               <div className="totals-grid">
-                <div className="total-item">
-                  <span className="total-value">{Math.round(mealPlan.totals.calories)}</span>
-                  <span className="total-label">Calories</span>
-                  <span className={`target-badge ${mealPlan.meets_target ? 'met' : 'missed'}`}>
-                    Target: {mealPlan.target_calories}
+                <div>
+                  <h4>{Math.round(mealPlan.totals.calories)}</h4>
+                  <p>Calories</p>
+                  <span className={`pill ${mealPlan.meets_target ? 'pill--good' : 'pill--warn'}`}>
+                    Target {mealPlan.target_calories}
                   </span>
                 </div>
-                <div className="total-item">
-                  <span className="total-value">{Math.round(mealPlan.totals.protein)}g</span>
-                  <span className="total-label">Protein</span>
-                  {mealPlan.target_protein && (
-                    <span className={`target-badge ${mealPlan.meets_protein_target ? 'met' : 'missed'}`}>
-                      Target: {mealPlan.target_protein}g
-                    </span>
-                  )}
+                <div>
+                  <h4>{Math.round(mealPlan.totals.protein)}g</h4>
+                  <p>Protein</p>
+                  <span className={`pill ${mealPlan.meets_protein_target ? 'pill--good' : 'pill--warn'}`}>
+                    Target {mealPlan.target_protein}g
+                  </span>
                 </div>
-                <div className="total-item">
-                  <span className="total-value">{Math.round(mealPlan.totals.carbs)}g</span>
-                  <span className="total-label">Carbs</span>
+                <div>
+                  <h4>{Math.round(mealPlan.totals.carbs)}g</h4>
+                  <p>Carbs</p>
                 </div>
-                <div className="total-item">
-                  <span className="total-value">{Math.round(mealPlan.totals.fat)}g</span>
-                  <span className="total-label">Fat</span>
+                <div>
+                  <h4>{Math.round(mealPlan.totals.fat)}g</h4>
+                  <p>Fat</p>
                 </div>
               </div>
 
               <div className="macro-breakdown">
                 <div className="macro-bar">
-                  <div
-                    className="macro-segment protein"
-                    style={{ width: `${mealPlan.totals.protein_percent}%` }}
-                    title={`Protein: ${mealPlan.totals.protein_percent}%`}
-                  ></div>
-                  <div
-                    className="macro-segment carbs"
-                    style={{ width: `${mealPlan.totals.carb_percent}%` }}
-                    title={`Carbs: ${mealPlan.totals.carb_percent}%`}
-                  ></div>
-                  <div
-                    className="macro-segment fat"
-                    style={{ width: `${mealPlan.totals.fat_percent}%` }}
-                    title={`Fat: ${mealPlan.totals.fat_percent}%`}
-                  ></div>
+                  <div className="macro-segment protein" style={{ width: `${mealPlan.totals.protein_percent}%` }}></div>
+                  <div className="macro-segment carbs" style={{ width: `${mealPlan.totals.carb_percent}%` }}></div>
+                  <div className="macro-segment fat" style={{ width: `${mealPlan.totals.fat_percent}%` }}></div>
                 </div>
                 <div className="macro-legend">
                   <span><span className="legend-dot protein"></span> Protein {mealPlan.totals.protein_percent}%</span>
@@ -588,12 +620,12 @@ function MealBuilder({ diningHall, onBack }) {
               </div>
             </div>
 
-            <button className="regenerate-button" onClick={generateMealPlan} disabled={loading}>
-              🔄 Generate Another Meal
+            <button className="btn btn-ghost" onClick={generateMealPlan} disabled={loading}>
+              Generate Another
             </button>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }
@@ -610,9 +642,18 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [imageFallbacks, setImageFallbacks] = useState({})
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dietFilter, setDietFilter] = useState('any')
+  const [minProtein, setMinProtein] = useState(0)
+  const [maxCalories, setMaxCalories] = useState(1500)
+  const [sortBy, setSortBy] = useState('recommended')
+  const [favorites, setFavorites] = useState(new Set())
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [stats, setStats] = useState({ lastUpdated: '', hallCount: 0 })
 
   useEffect(() => {
     loadDiningHalls()
+    setFavorites(getFavorites())
   }, [])
 
   useEffect(() => {
@@ -623,14 +664,48 @@ function App() {
 
   useEffect(() => {
     let filtered = menuItems
+
     if (selectedMealType !== 'All') {
       filtered = filtered.filter(item => item.meal_type === selectedMealType)
     }
     if (selectedDate !== 'All') {
       filtered = filtered.filter(item => item.date === selectedDate)
     }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter(item =>
+        (item.name || '').toLowerCase().includes(q) ||
+        (item.category || '').toLowerCase().includes(q)
+      )
+    }
+
+    filtered = filtered.filter(item => (item.protein || 0) >= minProtein)
+    filtered = filtered.filter(item => (item.calories || 0) <= maxCalories)
+
+    if (dietFilter !== 'any') {
+      filtered = filtered.filter(item => {
+        const flags = getDietFlags(item)
+        if (dietFilter === 'vegetarian') return flags.vegetarian
+        if (dietFilter === 'vegan') return flags.vegan
+        return true
+      })
+    }
+
+    if (showFavoritesOnly) {
+      filtered = filtered.filter(item => favorites.has(getItemKey(selectedHall, item)))
+    }
+
+    if (sortBy === 'protein') {
+      filtered = filtered.slice().sort((a, b) => (b.protein || 0) - (a.protein || 0))
+    } else if (sortBy === 'calories') {
+      filtered = filtered.slice().sort((a, b) => (a.calories || 0) - (b.calories || 0))
+    } else if (sortBy === 'name') {
+      filtered = filtered.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    }
+
     setFilteredItems(filtered)
-  }, [selectedMealType, selectedDate, menuItems])
+  }, [selectedMealType, selectedDate, menuItems, searchQuery, minProtein, maxCalories, dietFilter, sortBy, favorites, showFavoritesOnly, selectedHall])
 
   async function loadDiningHalls() {
     try {
@@ -638,11 +713,11 @@ function App() {
       const response = await fetch(`${API_BASE}/dining-halls.json`)
       if (!response.ok) throw new Error('Failed to load dining halls')
       const data = await response.json()
-      // Filter to only show main dining halls in the preferred order
       const filtered = MAIN_DINING_HALLS.filter(hall =>
         (data.dining_halls || []).includes(hall)
       )
       setDiningHalls(filtered.length > 0 ? filtered : data.dining_halls || [])
+      setStats({ lastUpdated: data.last_updated || '', hallCount: (data.dining_halls || []).length })
       setError(null)
     } catch (err) {
       setError(err.message)
@@ -661,13 +736,12 @@ function App() {
       setMenuItems(data.foods || [])
       setFilteredItems(data.foods || [])
 
-      // Prefer today + next 4 days, fallback to all available dates
       const upcomingDates = getUpcomingDates(data.foods || [])
       const dates = upcomingDates.length > 0 ? upcomingDates : getSortedDates(data.foods || [])
 
       setAvailableDates(dates)
       if (dates.length > 0) {
-        setSelectedDate(dates[0]) // Default to the nearest available date
+        setSelectedDate(dates[0])
       } else {
         setSelectedDate('All')
       }
@@ -686,7 +760,22 @@ function App() {
     return ['All', ...types.sort()]
   }
 
-  // Show Meal Builder view
+  function toggleFavorite(item) {
+    const key = getItemKey(selectedHall, item)
+    const updated = new Set(favorites)
+    if (updated.has(key)) updated.delete(key)
+    else updated.add(key)
+    setFavorites(updated)
+    saveFavorites(updated)
+  }
+
+  const hallStats = useMemo(() => {
+    const totalItems = menuItems.length
+    const mealTypes = new Set(menuItems.map(item => item.meal_type)).size
+    const dates = new Set(menuItems.map(item => item.date)).size
+    return { totalItems, mealTypes, dates }
+  }, [menuItems])
+
   if (mealBuilderHall) {
     return (
       <MealBuilder
@@ -698,210 +787,309 @@ function App() {
 
   if (loading && diningHalls.length === 0) {
     return (
-      <div>
-        <div className="header">
-          <div className="header-content">
-            <div className="logo">🌾</div>
+      <div className="page">
+        <header className="hero hero--compact">
+          <div className="hero-content">
             <div>
-              <h1>Project Harvest</h1>
-              <p>University of Illinois Dining Nutrition Tracker</p>
+              <p className="hero-eyebrow">Project Harvest</p>
+              <h1>Warming up the menu...</h1>
+              <p className="hero-subtitle">Loading dining halls and today’s menu data.</p>
             </div>
           </div>
-        </div>
-        <div className="container">
-          <div className="loading">
+        </header>
+        <main className="container">
+          <div className="loading-card">
             <div className="spinner"></div>
             <p>Loading dining halls...</p>
           </div>
-        </div>
+        </main>
       </div>
     )
   }
 
   if (error && diningHalls.length === 0) {
     return (
-      <div>
-        <div className="header">
-          <div className="header-content">
-            <div className="logo">🌾</div>
+      <div className="page">
+        <header className="hero hero--compact">
+          <div className="hero-content">
             <div>
-              <h1>Project Harvest</h1>
-              <p>University of Illinois Dining Nutrition Tracker</p>
+              <p className="hero-eyebrow">Project Harvest</p>
+              <h1>We hit a snag.</h1>
+              <p className="hero-subtitle">Let’s try fetching the data again.</p>
             </div>
           </div>
-        </div>
-        <div className="container">
-          <div className="error">
-            <h2>⚠️ Error Loading Data</h2>
+        </header>
+        <main className="container">
+          <div className="alert alert-error">
             <p>{error}</p>
-            <button className="retry-button" onClick={loadDiningHalls}>
-              Try Again
-            </button>
+            <button className="btn btn-primary" onClick={loadDiningHalls}>Try Again</button>
           </div>
-        </div>
+        </main>
       </div>
     )
   }
 
   if (selectedHall) {
     return (
-      <div>
-        <div className="header">
-          <div className="header-content">
-            <div className="logo">🌾</div>
+      <div className="page">
+        <header className="hero hero--compact">
+          <div className="hero-content">
             <div>
-              <h1>Project Harvest</h1>
-              <p>{selectedHall}</p>
+              <p className="hero-eyebrow">Dining Hall</p>
+              <h1>{selectedHall}</h1>
+              <p className="hero-subtitle">Explore today’s menu and build your perfect plate.</p>
             </div>
+            <div className="hero-chip">{hallStats.totalItems} items</div>
           </div>
-        </div>
-        <div className="container">
-          <button className="back-button" onClick={() => setSelectedHall(null)}>
-            <span>←</span> Back to Dining Halls
-          </button>
+        </header>
 
-          <div className="menu-section">
-            <div className="menu-header">
-              <h2>Today's Menu</h2>
-              <p className="menu-subtitle">{filteredItems.length} items available</p>
+        <main className="container container--wide">
+          <div className="toolbar">
+            <button className="btn btn-ghost" onClick={() => setSelectedHall(null)}>
+              ← Back to Dining Halls
+            </button>
+            <button className="btn btn-primary" onClick={() => setMealBuilderHall(selectedHall)}>
+              Build My Meal
+            </button>
+          </div>
+
+          <section className="panel">
+            <div className="panel-header">
+              <div>
+                <h2>Menu explorer</h2>
+                <p>{filteredItems.length} items shown</p>
+              </div>
+              <div className="pill">{hallStats.dates} days • {hallStats.mealTypes} meal types</div>
             </div>
 
-            <div className="menu-filters">
-              <div className="filter-group">
-                <span className="filter-label">📅 Date:</span>
-                <select
-                  className="date-select"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                >
-                  <option value="All">All Dates</option>
-                  {availableDates.map(date => (
-                    <option key={date} value={date}>{date}</option>
-                  ))}
-                </select>
+            <div className="filter-stack">
+              <div className="filter-row">
+                <div className="form-group">
+                  <label>Search</label>
+                  <input
+                    type="text"
+                    placeholder="Try \"banana\" or \"salad\""
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Date</label>
+                  <select
+                    className="select"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  >
+                    <option value="All">All Dates</option>
+                    {availableDates.map(date => (
+                      <option key={date} value={date}>{formatDateLabel(date)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Diet</label>
+                  <select className="select" value={dietFilter} onChange={(e) => setDietFilter(e.target.value)}>
+                    <option value="any">Any</option>
+                    <option value="vegetarian">Vegetarian</option>
+                    <option value="vegan">Vegan</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Sort by</label>
+                  <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                    <option value="recommended">Recommended</option>
+                    <option value="protein">Highest protein</option>
+                    <option value="calories">Lowest calories</option>
+                    <option value="name">Name</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="filter-group">
-                <span className="filter-label">🍽️ Meal:</span>
-                {getMealTypes().map(type => (
+              <div className="filter-row">
+                <div className="form-group">
+                  <label>Meal Type</label>
+                  <div className="toggle-row">
+                    {getMealTypes().map(type => (
+                      <button
+                        key={type}
+                        className={`chip ${selectedMealType === type ? 'chip--active' : ''}`}
+                        onClick={() => setSelectedMealType(type)}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Min Protein</label>
+                  <div className="range-wrap">
+                    <input
+                      type="range"
+                      min="0"
+                      max="40"
+                      value={minProtein}
+                      onChange={(e) => setMinProtein(parseInt(e.target.value, 10))}
+                    />
+                    <span>{minProtein}g+</span>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Max Calories</label>
+                  <div className="range-wrap">
+                    <input
+                      type="range"
+                      min="100"
+                      max="1200"
+                      value={maxCalories}
+                      onChange={(e) => setMaxCalories(parseInt(e.target.value, 10))}
+                    />
+                    <span>{maxCalories} cal</span>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Favorites</label>
                   <button
-                    key={type}
-                    className={`filter-button ${selectedMealType === type ? 'active' : ''}`}
-                    onClick={() => setSelectedMealType(type)}
+                    className={`chip ${showFavoritesOnly ? 'chip--active' : ''}`}
+                    onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
                   >
-                    {type === 'All' && '🍽️ '}
-                    {type === 'Breakfast' && '🌅 '}
-                    {type === 'Lunch' && '☀️ '}
-                    {type === 'Dinner' && '🌙 '}
-                    {type}
+                    {showFavoritesOnly ? 'Showing Favorites' : 'Show Favorites'}
                   </button>
-                ))}
+                </div>
               </div>
             </div>
 
             {loading ? (
-              <div className="loading">
+              <div className="loading-card">
                 <div className="spinner"></div>
                 <p>Loading menu...</p>
               </div>
             ) : filteredItems.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon">🍽️</div>
-                <p>No items found for {selectedMealType === 'All' ? 'this dining hall' : selectedMealType}</p>
+                <p>No items match your filters.</p>
               </div>
             ) : (
               <div className="menu-items">
-                {filteredItems.map((item, index) => (
-                  <div key={index} className="menu-item">
-                    <div className="item-header">
-                      <div className="item-name">{item.name}</div>
-                      <div className="calories-badge">{item.calories || 0} cal</div>
+                {filteredItems.map((item, index) => {
+                  const flags = getDietFlags(item)
+                  const isFav = favorites.has(getItemKey(selectedHall, item))
+                  return (
+                    <div key={`${item.name}-${index}`} className="menu-item">
+                      <div className="item-header">
+                        <div>
+                          <div className="item-name">{item.name}</div>
+                          <div className="item-meta">
+                            <span className="meta-tag">{item.category || 'N/A'}</span>
+                            <span className="meta-tag">{item.serving_size || 'N/A'}</span>
+                            {flags.vegan && <span className="tag tag--vegan">Vegan</span>}
+                            {!flags.vegan && flags.vegetarian && <span className="tag tag--veg">Vegetarian</span>}
+                          </div>
+                        </div>
+                        <div className="item-actions">
+                          <div className="calories-badge">{item.calories || 0} cal</div>
+                          <button className={`icon-btn ${isFav ? 'icon-btn--active' : ''}`} onClick={() => toggleFavorite(item)}>
+                            {isFav ? '★' : '☆'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="nutrition-grid">
+                        <div>
+                          <span>Protein</span>
+                          <strong>{item.protein || 0}g</strong>
+                        </div>
+                        <div>
+                          <span>Carbs</span>
+                          <strong>{item.total_carbohydrate || 0}g</strong>
+                        </div>
+                        <div>
+                          <span>Fat</span>
+                          <strong>{item.total_fat || 0}g</strong>
+                        </div>
+                        <div>
+                          <span>Fiber</span>
+                          <strong>{item.dietary_fiber || 0}g</strong>
+                        </div>
+                      </div>
                     </div>
-                    <div className="item-meta">
-                      <span className="meta-tag">🍽️ {item.category || 'N/A'}</span>
-                      <span className="meta-tag">📏 {item.serving_size || 'N/A'}</span>
-                    </div>
-                    <div className="nutrition-grid">
-                      <div className="nutrition-item protein">
-                        <span className="nutrition-label">Protein</span>
-                        <span className="nutrition-value">{item.protein || 0}g</span>
-                      </div>
-                      <div className="nutrition-item carbs">
-                        <span className="nutrition-label">Carbs</span>
-                        <span className="nutrition-value">{item.total_carbohydrate || 0}g</span>
-                      </div>
-                      <div className="nutrition-item fat">
-                        <span className="nutrition-label">Fat</span>
-                        <span className="nutrition-value">{item.total_fat || 0}g</span>
-                      </div>
-                      <div className="nutrition-item fiber">
-                        <span className="nutrition-label">Fiber</span>
-                        <span className="nutrition-value">{item.dietary_fiber || 0}g</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
-          </div>
-        </div>
+          </section>
+        </main>
       </div>
     )
   }
 
   return (
-    <div>
-      <div className="header">
-        <div className="header-content">
-          <div className="logo">🌾</div>
+    <div className="page">
+      <header className="hero">
+        <div className="hero-content">
           <div>
-            <h1>Project Harvest</h1>
-            <p>University of Illinois Dining Nutrition Tracker</p>
-          </div>
-        </div>
-      </div>
-      <div className="container">
-        <div className="page-header">
-          <h2>Choose Your Dining Hall</h2>
-          <p className="subtitle">Select a dining hall to view today's menu and nutrition information</p>
-        </div>
-
-        <div className="dining-halls-grid">
-          {diningHalls.map((hall) => (
-            <div
-              key={hall}
-              className="dining-hall-card"
-            >
-              <div className="dining-hall-image" onClick={() => setSelectedHall(hall)}>
-                <img
-                  src={DINING_HALL_IMAGES[hall]}
-                  alt={hall}
-                  onError={(e) => { e.target.onerror = null; e.target.src = `${BASE_IMAGES_URL}/Logo.png`; setImageFallbacks(prev => ({ ...prev, [hall]: true })); }}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                {imageFallbacks[hall] && (
-                  <div style={{ position: 'absolute', left: 8, top: 8, backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 6px', borderRadius: 4, fontSize: 12 }}>
-                    Using fallback image
-                  </div>
-                )}
-                <div className="image-overlay"></div>
-              </div>
-              <div className="dining-hall-content">
-                <h3 className="dining-hall-name">{hall}</h3>
-                <p className="dining-hall-info">{DINING_HALL_INFO[hall]}</p>
-                <div className="card-buttons">
-                  <button className="view-menu-button" onClick={() => setSelectedHall(hall)}>
-                    View Menu →
-                  </button>
-                  <button className="build-meal-button" onClick={() => setMealBuilderHall(hall)}>
-                    ✨ Build My Meal
-                  </button>
-                </div>
+            <p className="hero-eyebrow">Project Harvest</p>
+            <h1>Warm, satisfying meals made simple.</h1>
+            <p className="hero-subtitle">Explore today’s dining hall menus and build a meal that fits your goals.</p>
+            <div className="hero-actions">
+              <button className="btn btn-primary" onClick={() => setSelectedHall(diningHalls[0] || null)}>
+                Explore Menus
+              </button>
+              <div className="hero-stats">
+                <span>{stats.hallCount} halls</span>
+                <span>{stats.lastUpdated ? `Updated ${new Date(stats.lastUpdated).toLocaleDateString()}` : 'Fresh daily'}</span>
               </div>
             </div>
-          ))}
+          </div>
+          <div className="hero-card">
+            <h3>What’s cooking</h3>
+            <p>Browse dining halls, filter for your macros, and build a cozy plate in minutes.</p>
+            <div className="hero-card-tags">
+              <span>Real-time menus</span>
+              <span>Nutrition-first</span>
+              <span>Favorites</span>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
+
+      <main className="container container--wide">
+        <section className="section">
+          <div className="section-header">
+            <div>
+              <h2>Choose your dining hall</h2>
+              <p>Pick a location to see today’s menu and detailed nutrition.</p>
+            </div>
+          </div>
+          <div className="dining-halls-grid">
+            {diningHalls.map((hall) => (
+              <div key={hall} className="dining-hall-card">
+                <div className="dining-hall-image" onClick={() => setSelectedHall(hall)}>
+                  <img
+                    src={DINING_HALL_IMAGES[hall]}
+                    alt={hall}
+                    onError={(e) => { e.target.onerror = null; e.target.src = `${BASE_IMAGES_URL}/Logo.png`; setImageFallbacks(prev => ({ ...prev, [hall]: true })); }}
+                  />
+                  <div className="image-overlay"></div>
+                  {imageFallbacks[hall] && (
+                    <div className="image-fallback">Fallback image</div>
+                  )}
+                </div>
+                <div className="dining-hall-content">
+                  <h3>{hall}</h3>
+                  <p>{DINING_HALL_INFO[hall]}</p>
+                  <div className="card-buttons">
+                    <button className="btn btn-outline" onClick={() => setSelectedHall(hall)}>
+                      View Menu
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setMealBuilderHall(hall)}>
+                      Build Meal
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   )
 }
