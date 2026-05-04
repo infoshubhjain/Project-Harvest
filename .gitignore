@@ -43,5 +43,9 @@ Backend/scrapers/debug_log.txt
 # Archives — large binary blobs, not useful in git history
 Backend/data/archives/
 
+# Runtime data files — contain user data, regenerated at runtime
+Backend/data/users.json
+Backend/data/meal_tracking.json
+
 # Claude
 .claude/
