@@ -67,16 +67,11 @@ jobs:
           cd Backend
           python3 export_to_json.py
 
-      - name: Copy images to Docs
-        run: |
-          cd Backend/scripts
-          python3 copy_images_to_docs.py
-
       - name: Commit and push updated data
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add Docs/api/ webapp/public/api/ Backend/data/nutrition_data.db Docs/images/
+          git add Docs/api/ webapp/public/api/ Backend/data/nutrition_data.db
           git diff --staged --quiet || git commit -m "🤖 Auto-update dining hall data & API - $(date +'%Y-%m-%d %H:%M')"
           git push
         continue-on-error: true
