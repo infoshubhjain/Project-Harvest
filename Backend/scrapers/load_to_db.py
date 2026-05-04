@@ -90,19 +90,24 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
     # Prepare data for insertion
     cursor = conn.cursor()
 
-    # Clear existing data for the dining halls we are importing
-    # (So we don't have duplicates, but we preserve other halls)
-    if 'dining_hall' in df.columns:
+    # Delete only the (dining_hall, date) pairs we are about to re-insert so
+    # that previously scraped dates for the same hall are preserved.
+    if 'dining_hall' in df.columns and 'date' in df.columns:
+        hall_date_pairs = df[['dining_hall', 'date']].drop_duplicates().values.tolist()
+        print(f"Replacing data for {len(hall_date_pairs)} (hall, date) combinations...")
+        for hall, date in hall_date_pairs:
+            cursor.execute(
+                "DELETE FROM nutrition_data WHERE dining_hall = ? AND date = ?",
+                (hall, date)
+            )
+        print(f"✓ Cleared stale rows for the scraped (hall, date) pairs only")
+    elif 'dining_hall' in df.columns:
         halls_to_update = df['dining_hall'].unique()
-        print(f"Updating data for: {', '.join(halls_to_update)}")
-        
+        print(f"Warning: no date column — falling back to clearing all rows for: {', '.join(halls_to_update)}")
         placeholders = ','.join(['?'] * len(halls_to_update))
         cursor.execute(f"DELETE FROM nutrition_data WHERE dining_hall IN ({placeholders})", list(halls_to_update))
-        print(f"✓ Cleared existing data for these {len(halls_to_update)} halls")
     else:
-        # Fallback if no dining_hall column (shouldn't happen with our scraper)
         print("Warning: No dining_hall column found, appending data without clearing old records.")
-        # cursor.execute("DELETE FROM nutrition_data") 
     
     # Insert data
     inserted = 0

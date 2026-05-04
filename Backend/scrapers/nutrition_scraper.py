@@ -737,6 +737,29 @@ class NutritionScraperComplete:
         
         return nutrition_info
     
+    def normalize_date(self, date_str):
+        """Convert any date string the site produces to YYYY-MM-DD for consistent sorting.
+
+        Handles:
+        - "Monday, May 04, 2026"  -> "2026-05-04"
+        - "Today, May 04, 2026"   -> "2026-05-04"
+        - Already-normalised "2026-05-04" passthrough
+        """
+        if not date_str:
+            return date_str
+        # Already in ISO format
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', date_str.strip()):
+            return date_str.strip()
+        # Strip leading weekday / "Today" label (everything before and including the first comma+space)
+        cleaned = re.sub(r'^[^,]+,\s*', '', date_str.strip())
+        for fmt in ('%B %d, %Y', '%b %d, %Y', '%m/%d/%Y'):
+            try:
+                return datetime.strptime(cleaned, fmt).strftime('%Y-%m-%d')
+            except ValueError:
+                continue
+        # Fallback: return original so nothing is lost
+        return date_str
+
     def parse_nutrition_value(self, value_str):
         """Parse nutrition value and convert to grams (standardized format)
 
@@ -1059,7 +1082,7 @@ class NutritionScraperComplete:
                             result = {
                                 'dining_hall': hall_name,
                                 'service': service_name,
-                                'date': target_meal_info['date'], # Use the fresh date from the element
+                                'date': self.normalize_date(target_meal_info['date']),
                                 'meal_type': target_meal_info['meal_type'],
                                 'category': category,
                                 'name': item_data['name'],
