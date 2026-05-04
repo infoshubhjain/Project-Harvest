@@ -2,245 +2,325 @@
   "meals": [
     {
       "meal_type": "Beverages",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Breakfast",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Cereal",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Condiments",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Deli & Bagel Bar",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Dinner",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Ice Cream",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Lunch",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Salad Bar",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Waffle Bar",
-      "date": "Tuesday, March 10, 2026"
+      "date": "2026-05-05"
     },
     {
       "meal_type": "Beverages",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Breakfast",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Cereal",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Condiments",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Deli & Bagel Bar",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Dinner",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Ice Cream",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Lunch",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Salad Bar",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Waffle Bar",
-      "date": "Thursday, March 5, 2026"
+      "date": "2026-05-04"
     },
     {
       "meal_type": "Beverages",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Breakfast",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Cereal",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Condiments",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Deli & Bagel Bar",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Dinner",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Ice Cream",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Lunch",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Salad Bar",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Waffle Bar",
-      "date": "Sunday, March 8, 2026"
+      "date": "2026-03-10"
     },
     {
       "meal_type": "Beverages",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Breakfast",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Cereal",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Condiments",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Deli & Bagel Bar",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Dinner",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Ice Cream",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Lunch",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Salad Bar",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Waffle Bar",
-      "date": "Saturday, March 7, 2026"
+      "date": "2026-03-09"
     },
     {
       "meal_type": "Beverages",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Breakfast",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Cereal",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Condiments",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Deli & Bagel Bar",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Dinner",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Ice Cream",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Lunch",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Salad Bar",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Waffle Bar",
-      "date": "Monday, March 9, 2026"
+      "date": "2026-03-08"
     },
     {
       "meal_type": "Beverages",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Breakfast",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Cereal",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Condiments",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Deli & Bagel Bar",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Dinner",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Ice Cream",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Lunch",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Salad Bar",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
     },
     {
       "meal_type": "Waffle Bar",
-      "date": "Friday, March 6, 2026"
+      "date": "2026-03-07"
+    },
+    {
+      "meal_type": "Beverages",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Cereal",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Condiments",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Deli & Bagel Bar",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Ice Cream",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Salad Bar",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Waffle Bar",
+      "date": "2026-03-06"
+    },
+    {
+      "meal_type": "Beverages",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Breakfast",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Cereal",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Condiments",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Deli & Bagel Bar",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Dinner",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Ice Cream",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Lunch",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Salad Bar",
+      "date": "2026-03-05"
+    },
+    {
+      "meal_type": "Waffle Bar",
+      "date": "2026-03-05"
     }
   ],
-  "count": 60,
-  "last_updated": "2026-03-06T03:47:39.748268"
+  "count": 80,
+  "last_updated": "2026-05-04T15:03:04.715512"
 }
