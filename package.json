@@ -8,9 +8,7 @@
         "test": "cd Backend/scrapers && pytest",
         "scrape": "cd Backend/scrapers && python3 nutrition_scraper.py --days 5 && python3 load_to_db.py && cd ../../Backend && python3 export_to_json.py",
         "scrape:test": "cd Backend/scrapers && python3 nutrition_scraper.py --testing --days 5 && python3 load_to_db.py && cd ../../Backend && python3 export_to_json.py",
-        "scrape:full": "cd Backend/scrapers && python3 nutrition_scraper.py --days 5 && python3 load_to_db.py && cd ../../Backend && python3 export_to_json.py",
-        "scrape:today": "cd Backend/scrapers && python3 nutrition_scraper.py --days 1 && python3 load_to_db.py && cd ../../Backend && python3 export_to_json.py",
-        "check": "npm run test"
+        "scrape:today": "cd Backend/scrapers && python3 nutrition_scraper.py --days 1 && python3 load_to_db.py && cd ../../Backend && python3 export_to_json.py"
     },
     "keywords": [],
     "author": "",
