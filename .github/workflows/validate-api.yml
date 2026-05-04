@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: write
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -22,29 +25,25 @@ jobs:
         run: |
           cd Backend/scrapers
           pip install -r requirements.txt
-          cd ../..
 
       - name: Run JSON validator
+        id: validate
         run: |
           python3 Backend/scripts/validate_docs_api.py
+          echo "valid=true" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      - name: If invalid, run quick scraper and export
-        if: always()
+      - name: Repair invalid JSON via quick scrape
+        if: steps.validate.outputs.valid != 'true'
         run: |
-          VALID=$?
-          if [ "$VALID" -ne 0 ]; then
-            echo "Invalid JSON detected: triggering quick scraper to refresh data"
-            cd Backend/scrapers
-            python3 nutrition_scraper.py --testing --headless
-            cd ..
-            python3 export_to_json.py
-            cd ..
-            git config --local user.email "github-actions[bot]@users.noreply.github.com"
-            git config --local user.name "github-actions[bot]"
-            git add Docs/api/
-            git diff --staged --quiet || git commit -m "🤖 Auto-fix: refreshed API JSON files via quick scraper - $(date +'%Y-%m-%d %H:%M')"
-            git push
-          else
-            echo "JSON valid"
-          fi
+          echo "Invalid JSON detected — running quick scrape to repair"
+          cd Backend/scrapers
+          python3 nutrition_scraper.py --testing
+          python3 load_to_db.py
+          cd ..
+          python3 export_to_json.py
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Docs/api/ webapp/public/api/
+          git diff --staged --quiet || git commit -m "🤖 Auto-fix: repaired invalid API JSON - $(date +'%Y-%m-%d %H:%M')"
+          git push

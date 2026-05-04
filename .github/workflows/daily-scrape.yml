@@ -8,7 +8,7 @@ on:
     # - 13:00 UTC ~= 8:00 AM CDT (roughly Mar-Oct)
     - cron: '0 14 * 1,2,11,12 *'
     - cron: '0 13 * 3-10 *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
     inputs:
       testing:
         description: 'Enable testing mode to run a limited, fast scrape'
@@ -46,7 +46,6 @@ jobs:
       - name: Run scraper
         run: |
           cd Backend/scrapers
-          # Mask inputs and default to full scrape
           TESTING=''
           if [ "${{ github.event.inputs.testing }}" = 'true' ]; then
             TESTING='--testing'
@@ -72,25 +71,12 @@ jobs:
         run: |
           cd Backend/scripts
           python3 copy_images_to_docs.py
-          cd ../..
 
-
-      # (Duplicate step removed; export already run above)
-
-      - name: Commit and push exported JSON and DB
+      - name: Commit and push updated data
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add Docs/api/ webapp/public/api/ Backend/data/nutrition_data.db Backend/data/archives/
+          git add Docs/api/ webapp/public/api/ Backend/data/nutrition_data.db Docs/images/
           git diff --staged --quiet || git commit -m "🤖 Auto-update dining hall data & API - $(date +'%Y-%m-%d %H:%M')"
-          git push
-        continue-on-error: true
-
-      - name: Commit and push scraped data
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add Backend/data/nutrition_data.db Backend/data/archives/ Docs/api/ webapp/public/api/ Docs/images/
-          git diff --staged --quiet || git commit -m "🤖 Auto-update dining hall data - $(date +'%Y-%m-%d %H:%M')"
           git push
         continue-on-error: true

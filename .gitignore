@@ -1,4 +1,4 @@
-# OS Files
+# OS
 .DS_Store
 Thumbs.db
 
@@ -8,8 +8,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-
-# Virtual Environment
 venv/
 env/
 ENV/
@@ -21,24 +19,29 @@ ENV/
 *.swo
 *~
 
-# Backend - Nutrition Scraper Output
-Backend/scrapers/*.xlsx
-!Backend/scrapers/example_output.xlsx
-
-# Logs
-*.log
-*.tmp
-
-# Claude
-.claude/
-
 # Node.js
 node_modules/
 .npm-cache/
 npm-debug.log
 yarn-error.log
 
-# Cache
-.cache/
+# Build output
 dist/
 build/
+.cache/
+
+# Logs & temp
+*.log
+*.tmp
+
+# Scraper outputs — Excel files are intermediate, never committed
+*.xlsx
+Backend/scrapers/snapshots/
+Backend/scrapers/debug_fragments/
+Backend/scrapers/debug_log.txt
+
+# Archives — large binary blobs, not useful in git history
+Backend/data/archives/
+
+# Claude
+.claude/
