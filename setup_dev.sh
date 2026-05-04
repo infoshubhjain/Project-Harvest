@@ -1,88 +1,22 @@
 #!/bin/bash
+# setup_dev.sh — install all dependencies for local development
 
-# setup_dev.sh
-# Standardizes development environment setup for Project-Harvest
+set -e
 
-set -e  # Exit on error
+command -v python3 >/dev/null 2>&1 || { echo "Error: python3 not found"; exit 1; }
+command -v npm >/dev/null 2>&1    || { echo "Error: npm not found"; exit 1; }
 
-echo "================================================================================"
-echo "🌽 Project-Harvest Development Setup"
-echo "================================================================================"
+echo "Installing Python scraper dependencies..."
+cd Backend/scrapers && python3 -m pip install -r requirements.txt && cd ../..
 
-# Check for Python
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 is not installed or not in PATH."
-    exit 1
-fi
+echo "Installing Backend Node dependencies..."
+cd Backend && npm install && cd ..
 
-# Check for Node.js
-if ! command -v npm &> /dev/null; then
-    echo "❌ npm is not installed or not in PATH."
-    exit 1
-fi
+echo "Installing webapp dependencies..."
+cd webapp && npm install && cd ..
 
-echo "✅ Prerequisites met (Python 3, npm)"
-
-# 1. Setup Backend/Scrapers (Python)
 echo ""
-echo "--------------------------------------------------------------------------------"
-echo "🐍 Setting up Scraper Environment..."
-echo "--------------------------------------------------------------------------------"
-cd Backend/scrapers
-if [ ! -f "requirements.txt" ]; then
-    echo "❌ requirements.txt not found in Backend/scrapers"
-    exit 1
-fi
-python3 -m pip install -r requirements.txt
-echo "✅ Scraper dependencies installed."
-cd ../..
-
-# 2. Setup Backend (Node.js)
-echo ""
-echo "--------------------------------------------------------------------------------"
-echo "⚙️ Setting up Backend API..."
-echo "--------------------------------------------------------------------------------"
-cd Backend
-if [ ! -f "package.json" ]; then
-    echo "❌ package.json not found in Backend"
-    exit 1
-fi
-npm install
-echo "✅ Backend dependencies installed."
-if [ ! -f ".env" ]; then
-    echo "⚠️  Note: No .env file found in Backend/. You may need to create one if the app requires secrets."
-fi
-cd ..
-
-# 3. Setup Frontend Webapp (Node.js)
-echo ""
-echo "--------------------------------------------------------------------------------"
-echo "⚛️ Setting up React Webapp..."
-echo "--------------------------------------------------------------------------------"
-cd webapp
-npm install
-echo "✅ Webapp dependencies installed."
-echo "🔨 Building webapp..."
-npm run build
-echo "✅ Webapp built successfully."
-cd ..
-
-# 4. Summary
-echo ""
-echo "================================================================================"
-echo "🎉 Setup Complete!"
-echo "================================================================================"
-echo "To run the project components:"
-echo ""
-echo "1. Run Scraper Tests:"
-echo "   cd Backend/scrapers && pytest"
-echo ""
-echo "2. Run Backend API:"
-echo "   cd Backend && npm start"
-echo ""
-echo "3. Run Webapp (Dev):"
-echo "   cd webapp && npm run dev"
-echo ""
-echo "4. Run Scraper (Actual):"
-echo "   cd Backend/scrapers && python3 nutrition_scraper.py --testing"
-echo "================================================================================"
+echo "Setup complete. To start:"
+echo "  npm start          — backend (:3000) + webapp (:5173)"
+echo "  npm run scrape     — run scraper pipeline"
+echo "  npm test           — run scraper tests"
