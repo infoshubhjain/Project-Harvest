@@ -6,6 +6,13 @@ on:
       - master
       - main
   workflow_dispatch: {}
+  workflow_run:
+    workflows:
+      - "Daily Dining Hall Data Scrape"
+    types:
+      - completed
+    branches:
+      - master
 
 permissions:
   contents: write
