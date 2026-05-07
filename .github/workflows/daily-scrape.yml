@@ -19,6 +19,7 @@ on:
         required: false
         default: 'false'
 
+# Write access is required to commit the updated DB and JSON files back to the repo.
 permissions:
   contents: write
 
@@ -26,6 +27,8 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     concurrency:
+      # Prevent two scrapes from running at the same time on the same branch,
+      # which could cause conflicting commits to the DB file.
       group: daily-scrape-${{ github.ref }}
       cancel-in-progress: true
 
@@ -46,6 +49,7 @@ jobs:
       - name: Run scraper
         run: |
           cd Backend/scrapers
+          # Build optional flags from workflow_dispatch inputs; empty string if not set.
           TESTING=''
           if [ "${{ github.event.inputs.testing }}" = 'true' ]; then
             TESTING='--testing'
@@ -54,17 +58,22 @@ jobs:
           if [ "${{ github.event.inputs.save_snapshots }}" = 'true' ]; then
             SAVESNAP='--save-snapshots'
           fi
+          # Scrape 5 days (today + 4 ahead) so the frontend always has upcoming menus.
           python3 nutrition_scraper.py --days 5 $TESTING $SAVESNAP
+        # Long timeout because each menu item requires opening a nutrition modal via Selenium.
         timeout-minutes: 150
 
       - name: Load scraped data into database
         run: |
           cd Backend/scrapers
+          # Reads the most-recent .xlsx produced by the scraper and upserts it into nutrition_data.db.
           python3 load_to_db.py
 
       - name: Export JSON API files
         run: |
           cd Backend
+          # Writes per-hall JSON files to Docs/api/ (served by GH Pages) and
+          # webapp/public/api/ (used by the Vite dev server locally).
           python3 export_to_json.py
 
       - name: Commit and push updated data
@@ -72,6 +81,8 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Docs/api/ webapp/public/api/ Backend/data/nutrition_data.db
+          # --quiet exits 0 when nothing changed, preventing an empty commit.
           git diff --staged --quiet || git commit -m "🤖 Auto-update dining hall data & API - $(date +'%Y-%m-%d %H:%M')"
           git push
+        # continue-on-error so a push conflict (rare) doesn't fail the whole scrape.
         continue-on-error: true

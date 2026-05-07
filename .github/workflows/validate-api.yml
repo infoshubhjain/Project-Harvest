@@ -1,11 +1,13 @@
 name: Validate API JSON and Repair
 
+# Run on every push and PR so bad JSON is caught before GH Pages serves it.
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
 
+# Write access is needed so the repair step can push auto-fix commits back to master.
 permissions:
   contents: write
 
@@ -30,20 +32,27 @@ jobs:
         id: validate
         run: |
           python3 Backend/scripts/validate_docs_api.py
+          # Only set valid=true when the validator exits 0; if it errors/exits nonzero,
+          # this line is never reached and the output stays unset (falsy).
           echo "valid=true" >> $GITHUB_OUTPUT
+        # Allow the job to continue so the repair step can run on failure.
         continue-on-error: true
 
       - name: Repair invalid JSON via quick scrape
+        # Only runs when the validator did NOT set valid=true (i.e., it failed or errored).
         if: steps.validate.outputs.valid != 'true'
         run: |
           echo "Invalid JSON detected — running quick scrape to repair"
           cd Backend/scrapers
+          # --testing flag limits items scraped so this completes quickly in CI.
           python3 nutrition_scraper.py --testing
           python3 load_to_db.py
           cd ..
+          # Writes fresh JSON to both Docs/api/ (GH Pages) and webapp/public/api/ (local dev mirror).
           python3 export_to_json.py
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Docs/api/ webapp/public/api/
+          # --quiet exits 0 if nothing changed; the || prevents a pointless empty commit.
           git diff --staged --quiet || git commit -m "🤖 Auto-fix: repaired invalid API JSON - $(date +'%Y-%m-%d %H:%M')"
           git push

@@ -5,7 +5,10 @@ on:
     branches:
       - master
       - main
+  # Allow manual re-deploy from the Actions UI.
   workflow_dispatch: {}
+  # Also re-deploy automatically after every successful daily scrape so the
+  # static site always serves the freshest JSON without a manual trigger.
   workflow_run:
     workflows:
       - "Daily Dining Hall Data Scrape"
@@ -14,6 +17,7 @@ on:
     branches:
       - master
 
+# Write access is needed so peaceiris/actions-gh-pages can push to the gh-pages branch.
 permissions:
   contents: write
 
@@ -30,6 +34,8 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          # Cache key is scoped to webapp/package.json so root-level package changes
+          # don't incorrectly invalidate it.
           cache-dependency-path: webapp/package.json
 
       - name: Install dependencies
@@ -40,11 +46,14 @@ jobs:
       - name: Build React app
         run: |
           cd webapp
+          # Vite reads base: '/Project-Harvest/' from vite.config.js automatically.
           npm run build
 
       - name: Copy API files to build directory
         run: |
           mkdir -p webapp/dist/api
+          # Docs/api/ is the canonical source of truth committed to git.
+          # The build copies it into the dist so GH Pages serves it under /api/.
           cp -r Docs/api/* webapp/dist/api/
           echo "✅ API files copied to build directory"
           ls -la webapp/dist/api/
@@ -52,6 +61,7 @@ jobs:
       - name: Copy dining hall images into build
         run: |
           mkdir -p webapp/dist/images
+          # || true so the step doesn't fail when the images directory is empty.
           cp -r Docs/images/* webapp/dist/images/ || true
           echo "✅ Dining hall images copied to build directory"
           ls -la webapp/dist/images/ || true
@@ -62,6 +72,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Deploys the Vite build output (index.html + assets + api/ + images/).
           publish_dir: webapp/dist
           publish_branch: gh-pages
           user_name: 'github-actions[bot]'

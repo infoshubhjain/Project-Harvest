@@ -1,8 +1,11 @@
 #!/bin/bash
-# setup_dev.sh — install all dependencies for local development
+# setup_dev.sh — install all dependencies for local development.
+# Run once after cloning or whenever requirements change.
+# Equivalent to: npm run setup
 
-set -e
+set -e  # Exit immediately on any error.
 
+# Validate required tools before doing anything.
 command -v python3 >/dev/null 2>&1 || { echo "Error: python3 not found"; exit 1; }
 command -v npm >/dev/null 2>&1    || { echo "Error: npm not found"; exit 1; }
 

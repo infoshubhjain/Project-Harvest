@@ -1,27 +1,27 @@
+// auth.js — file-based user authentication for local development only.
+// In production the frontend is fully static; this module is never deployed.
 const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 
-// Database file path (JSON file)
+// Flat JSON file used as the user store (gitignored).
 const DB_FILE = path.join(__dirname, 'data', 'users.json');
 
-// Initialize database file if it doesn't exist
+// Ensure the data directory and users.json exist before any other operation.
 function initializeDatabase() {
     const dataDir = path.join(__dirname, 'data');
 
-    // Create data directory if it doesn't exist
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // Create users.json if it doesn't exist
     if (!fs.existsSync(DB_FILE)) {
         fs.writeFileSync(DB_FILE, JSON.stringify({ users: [] }, null, 2));
         console.log('Created users database file');
     }
 }
 
-// Read users from file
+// Read the full users array from disk. Returns [] on any read/parse error.
 function readUsers() {
     try {
         const data = fs.readFileSync(DB_FILE, 'utf8');
@@ -32,7 +32,7 @@ function readUsers() {
     }
 }
 
-// Write users to file
+// Persist the updated users array to disk. Returns false on write error.
 function writeUsers(users) {
     try {
         fs.writeFileSync(DB_FILE, JSON.stringify({ users }, null, 2));
@@ -43,30 +43,30 @@ function writeUsers(users) {
     }
 }
 
-// Hash password using crypto (built-in Node.js module)
+// Hash a plaintext password with a random salt using PBKDF2-SHA512.
+// Returns a "salt:hash" string that is safe to store in users.json.
 function hashPassword(password) {
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
     return `${salt}:${hash}`;
 }
 
-// Verify password
+// Verify a plaintext password against a stored "salt:hash" string.
 function verifyPassword(password, storedHash) {
     const [salt, hash] = storedHash.split(':');
     const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
     return hash === verifyHash;
 }
 
-// Register new user
+// Register a new user. Calls back with an error if the email is already taken.
 function registerUser(email, password, callback) {
     const users = readUsers();
 
-    // Check if email already exists
     if (users.find(u => u.email === email)) {
         return callback({ error: 'Email already exists' }, null);
     }
 
-    // Create new user
+    // Use max(existing IDs) + 1 so IDs never collide even after deletions.
     const newUser = {
         id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
         email: email,
@@ -94,11 +94,13 @@ function registerUser(email, password, callback) {
     }
 }
 
-// Login user
+// Authenticate a user. Returns a sanitized profile (no password_hash) on success.
 function loginUser(email, password, callback) {
     const users = readUsers();
     const user = users.find(u => u.email === email);
 
+    // Return the same generic error for both "not found" and "wrong password"
+    // to avoid leaking which emails are registered.
     if (!user) {
         return callback({ error: 'Invalid email or password' }, null);
     }
@@ -118,7 +120,7 @@ function loginUser(email, password, callback) {
     });
 }
 
-// Update user profile
+// Patch only the fields present in profileData; leave everything else untouched.
 function updateUserProfile(userId, profileData, callback) {
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === userId);
@@ -127,7 +129,6 @@ function updateUserProfile(userId, profileData, callback) {
         return callback({ error: 'User not found' }, null);
     }
 
-    // Update profile fields
     const { goal, age, sex, calories, dietary_restrictions, notifications_enabled } = profileData;
     if (goal !== undefined) users[userIndex].goal = goal;
     if (age !== undefined) users[userIndex].age = age;
@@ -156,7 +157,7 @@ function updateUserProfile(userId, profileData, callback) {
     }
 }
 
-// Get user profile
+// Retrieve a user's full profile (excluding password_hash).
 function getUserProfile(userId, callback) {
     const users = readUsers();
     const user = users.find(u => u.id === userId);
@@ -172,6 +173,7 @@ function getUserProfile(userId, callback) {
         age: user.age,
         sex: user.sex,
         calories: user.calories,
+        // Guard against older user records that predate these fields.
         dietary_restrictions: user.dietary_restrictions || [],
         notifications_enabled: user.notifications_enabled !== undefined ? user.notifications_enabled : true,
         favorites: user.favorites || [],
@@ -179,7 +181,7 @@ function getUserProfile(userId, callback) {
     });
 }
 
-// Change password
+// Verify the old password before accepting the new one.
 function changePassword(userId, oldPassword, newPassword, callback) {
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === userId);
@@ -188,12 +190,10 @@ function changePassword(userId, oldPassword, newPassword, callback) {
         return callback({ error: 'User not found' }, null);
     }
 
-    // Verify old password
     if (!verifyPassword(oldPassword, users[userIndex].password_hash)) {
         return callback({ error: 'Current password is incorrect' }, null);
     }
 
-    // Update password
     users[userIndex].password_hash = hashPassword(newPassword);
     users[userIndex].updated_at = new Date().toISOString();
 
@@ -204,7 +204,7 @@ function changePassword(userId, oldPassword, newPassword, callback) {
     }
 }
 
-// Add to favorites
+// Append a food item object to the user's favorites list.
 function addFavorite(userId, foodItem, callback) {
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === userId);
@@ -213,6 +213,7 @@ function addFavorite(userId, foodItem, callback) {
         return callback({ error: 'User not found' }, null);
     }
 
+    // Guard for old records that may not have the favorites field.
     if (!users[userIndex].favorites) {
         users[userIndex].favorites = [];
     }
@@ -227,7 +228,7 @@ function addFavorite(userId, foodItem, callback) {
     }
 }
 
-// Remove from favorites
+// Remove a favorite by its array index (caller must pass the correct index).
 function removeFavorite(userId, foodItemIndex, callback) {
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === userId);
@@ -250,7 +251,7 @@ function removeFavorite(userId, foodItemIndex, callback) {
     }
 }
 
-// Initialize database on module load
+// Bootstrap the data directory and JSON file when this module is first required.
 initializeDatabase();
 
 module.exports = {

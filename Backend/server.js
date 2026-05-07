@@ -1,3 +1,7 @@
+// server.js — Express API server for LOCAL DEVELOPMENT ONLY.
+// In production the frontend fetches static JSON from GitHub Pages.
+// This server is never deployed; it exists to let auth.js, meal_planner.py,
+// and the SQLite DB be exercised from the Vite dev server (port 5173 → 3000).
 const express = require('express');
 const cors = require('cors');
 const { spawn } = require('child_process');
@@ -9,83 +13,56 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Database connection
+// Open the SQLite DB that is produced by load_to_db.py / export_to_json.py.
 const dbPath = path.join(__dirname, 'data', 'nutrition_data.db');
 const db = new sqlite3.Database(dbPath);
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Serve static API files (for local testing matching GitHub Pages structure)
-// This allows requests to /api/dining-halls.json to serve the file from Docs/api/dining-halls.json
+// Serve static API JSON files so that requests to /api/dining-halls.json resolve
+// to Docs/api/dining-halls.json — mirrors the GitHub Pages structure locally.
 app.use('/api', express.static(path.join(__dirname, '../Docs/api')));
 
-// API Endpoint
+// ============ MEAL PLAN ENDPOINT ============
+
+// Generate a meal plan by delegating to the Python meal_planner.py optimizer.
+// Accepts calories, dining_hall, meal_type, protein, goal, date, vegetarian, vegan.
 app.get('/api/meal-plan', (req, res) => {
     const { calories, dining_hall, meal_type, protein } = req.query;
     console.log(`[${new Date().toISOString()}] Incoming meal-plan request:`, { calories, dining_hall, meal_type, protein });
 
-    // Validate required parameters
     if (!calories || !dining_hall) {
         return res.status(400).json({
             error: 'Missing required parameters: calories and dining_hall are required'
         });
     }
 
-    // Path to Python script
     const scriptPath = path.join(__dirname, 'meal-planning', 'meal_planner.py');
 
-    // Build arguments
+    // Build the argument list; --json forces single-line JSON output on stdout.
     const args = [
         scriptPath,
         '--calories', calories,
         '--hall', dining_hall,
-        '--json' // Force JSON output
+        '--json'
     ];
 
-    if (meal_type) {
-        args.push('--meal', meal_type);
-    }
+    if (meal_type)          args.push('--meal', meal_type);
+    if (req.query.goal)     args.push('--goal', req.query.goal);
+    if (protein)            args.push('--protein', protein);
+    if (req.query.date)     args.push('--date', req.query.date);
+    if (req.query.vegetarian === 'true') args.push('--vegetarian');
+    if (req.query.vegan === 'true')      args.push('--vegan');
 
-    if (req.query.goal) {
-        args.push('--goal', req.query.goal);
-    }
-
-    if (protein) {
-        args.push('--protein', protein);
-    }
-
-    if (req.query.date) {
-        args.push('--date', req.query.date);
-    }
-
-    if (req.query.vegetarian === 'true') {
-        args.push('--vegetarian');
-    }
-
-    if (req.query.vegan === 'true') {
-        args.push('--vegan');
-    }
-
-    // Spawn Python process
-    // Note: Using 'python3' - make sure it's in the path
     const pythonProcess = spawn('python3', args);
 
     let dataString = '';
     let errorString = '';
 
-    // Collect data from stdout
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
+    pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
+    pythonProcess.stderr.on('data', (data) => { errorString += data.toString(); });
 
-    // Collect errors from stderr
-    pythonProcess.stderr.on('data', (data) => {
-        errorString += data.toString();
-    });
-
-    // Handle process close
     pythonProcess.on('close', (code) => {
         if (code !== 0) {
             console.error(`Python script exited with code ${code}`);
@@ -97,11 +74,11 @@ app.get('/api/meal-plan', (req, res) => {
         }
 
         try {
-            // Robust parsing: search for the last line that looks like a JSON object
+            // The script may print log lines before the JSON result, so search
+            // backwards through stdout lines for the last valid JSON object.
             const lines = dataString.trim().split('\n');
             let mealPlan = null;
 
-            // Try parsing from the end backwards to find the JSON result
             for (let i = lines.length - 1; i >= 0; i--) {
                 const line = lines[i].trim();
                 if (line.startsWith('{') && line.endsWith('}')) {
@@ -109,7 +86,7 @@ app.get('/api/meal-plan', (req, res) => {
                         mealPlan = JSON.parse(line);
                         break;
                     } catch (e) {
-                        // Not valid JSON, continue searching
+                        // Not valid JSON, keep searching.
                     }
                 }
             }
@@ -134,7 +111,10 @@ app.get('/api/meal-plan', (req, res) => {
     });
 });
 
-// Authentication endpoints
+// ============ AUTHENTICATION ENDPOINTS ============
+
+// Register a new local-dev user. Emails and passwords are stored only in
+// Backend/data/users.json (gitignored) and never touch a remote service.
 app.post('/api/auth/register', (req, res) => {
     const { email, password } = req.body;
 
@@ -142,21 +122,17 @@ app.post('/api/auth/register', (req, res) => {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    // Password length check
     if (password.length < 6) {
         return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
     auth.registerUser(email, password, (err, result) => {
-        if (err) {
-            return res.status(400).json(err);
-        }
+        if (err) return res.status(400).json(err);
         res.status(201).json(result);
     });
 });
@@ -169,21 +145,18 @@ app.post('/api/auth/login', (req, res) => {
     }
 
     auth.loginUser(email, password, (err, result) => {
-        if (err) {
-            return res.status(401).json(err);
-        }
+        if (err) return res.status(401).json(err);
         res.json(result);
     });
 });
 
+// Update a user's nutrition profile (goal, age, sex, calories, dietary restrictions).
 app.put('/api/user/:userId/profile', (req, res) => {
     const userId = parseInt(req.params.userId);
     const profileData = req.body;
 
     auth.updateUserProfile(userId, profileData, (err, result) => {
-        if (err) {
-            return res.status(400).json(err);
-        }
+        if (err) return res.status(400).json(err);
         res.json(result);
     });
 });
@@ -192,9 +165,7 @@ app.get('/api/user/:userId/profile', (req, res) => {
     const userId = parseInt(req.params.userId);
 
     auth.getUserProfile(userId, (err, result) => {
-        if (err) {
-            return res.status(404).json(err);
-        }
+        if (err) return res.status(404).json(err);
         res.json(result);
     });
 });
@@ -212,13 +183,12 @@ app.post('/api/user/:userId/change-password', (req, res) => {
     }
 
     auth.changePassword(userId, oldPassword, newPassword, (err, result) => {
-        if (err) {
-            return res.status(400).json(err);
-        }
+        if (err) return res.status(400).json(err);
         res.json(result);
     });
 });
 
+// Add a food item object to the user's persisted favorites list.
 app.post('/api/user/:userId/favorites', (req, res) => {
     const userId = parseInt(req.params.userId);
     const { foodItem } = req.body;
@@ -228,41 +198,35 @@ app.post('/api/user/:userId/favorites', (req, res) => {
     }
 
     auth.addFavorite(userId, foodItem, (err, result) => {
-        if (err) {
-            return res.status(400).json(err);
-        }
+        if (err) return res.status(400).json(err);
         res.json(result);
     });
 });
 
+// Remove a favorite by its index in the stored array.
 app.delete('/api/user/:userId/favorites/:index', (req, res) => {
     const userId = parseInt(req.params.userId);
     const index = parseInt(req.params.index);
 
     auth.removeFavorite(userId, index, (err, result) => {
-        if (err) {
-            return res.status(400).json(err);
-        }
+        if (err) return res.status(400).json(err);
         res.json(result);
     });
 });
 
-// ============ NUTRITION DATA ENDPOINTS ============
+// ============ NUTRITION DATA ENDPOINTS (SQLite) ============
 
-// Get all available dining halls
+// Return the list of distinct dining hall names from the DB.
 app.get('/api/dining-halls', (req, res) => {
     const query = `SELECT DISTINCT dining_hall FROM nutrition_data ORDER BY dining_hall`;
 
     db.all(query, [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error', details: err.message });
-        }
-        const halls = rows.map(row => row.dining_hall);
-        res.json({ dining_halls: halls });
+        if (err) return res.status(500).json({ error: 'Database error', details: err.message });
+        res.json({ dining_halls: rows.map(row => row.dining_hall) });
     });
 });
 
-// Get foods for a specific dining hall and meal type
+// Return foods for a specific dining hall, optionally filtered by meal_type and date.
 app.get('/api/dining-halls/:hall/foods', (req, res) => {
     const { hall } = req.params;
     const { meal_type, date } = req.query;
@@ -275,27 +239,19 @@ app.get('/api/dining-halls/:hall/foods', (req, res) => {
     `;
     const params = [`%${hall}%`];
 
-    if (meal_type) {
-        query += ` AND meal_type = ?`;
-        params.push(meal_type);
-    }
-
-    if (date) {
-        query += ` AND date = ?`;
-        params.push(date);
-    }
+    if (meal_type) { query += ` AND meal_type = ?`;  params.push(meal_type); }
+    if (date)      { query += ` AND date = ?`;        params.push(date); }
 
     query += ` GROUP BY name ORDER BY category, name`;
 
     db.all(query, params, (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error', details: err.message });
-        }
+        if (err) return res.status(500).json({ error: 'Database error', details: err.message });
         res.json({ foods: rows, count: rows.length });
     });
 });
 
-// Get recommended foods for user based on goals
+// Return up to 20 foods scored by protein density / fiber for a given user's goal.
+// Scoring: highest protein-to-calorie ratio first, then lowest fat ratio, then fiber.
 app.get('/api/recommendations/:userId', (req, res) => {
     const userId = parseInt(req.params.userId);
     const { dining_hall, meal_type } = req.query;
@@ -304,15 +260,12 @@ app.get('/api/recommendations/:userId', (req, res) => {
         return res.status(400).json({ error: 'dining_hall is required' });
     }
 
-    // Get user profile to understand their goals
     auth.getUserProfile(userId, (err, user) => {
-        if (err) {
-            return res.status(404).json(err);
-        }
+        if (err) return res.status(404).json(err);
 
+        // Default to 2000 kcal/day if the user hasn't set a calorie target; split evenly across 3 meals.
         const targetCaloriesPerMeal = Math.floor((user.calories || 2000) / 3);
 
-        // Get foods from the dining hall
         let query = `
             SELECT DISTINCT name, category, serving_size, calories, protein,
                    total_fat, total_carbohydrate, dietary_fiber, sugars, sodium,
@@ -324,12 +277,9 @@ app.get('/api/recommendations/:userId', (req, res) => {
         `;
         const params = [`%${dining_hall}%`];
 
-        if (meal_type) {
-            query += ` AND meal_type = ?`;
-            params.push(meal_type);
-        }
+        if (meal_type) { query += ` AND meal_type = ?`; params.push(meal_type); }
 
-        // Score foods based on nutrition
+        // Rank by highest protein %, then lowest fat %, then highest fiber.
         query += `
             GROUP BY name
             ORDER BY
@@ -340,10 +290,7 @@ app.get('/api/recommendations/:userId', (req, res) => {
         `;
 
         db.all(query, params, (err, foods) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error', details: err.message });
-            }
-
+            if (err) return res.status(500).json({ error: 'Database error', details: err.message });
             res.json({
                 recommendations: foods,
                 user_target_calories: targetCaloriesPerMeal,
@@ -356,10 +303,9 @@ app.get('/api/recommendations/:userId', (req, res) => {
 
 // ============ MEAL TRACKING ENDPOINTS ============
 
-// Initialize meal tracking database
+// Flat JSON file used as the meal-log store (gitignored).
 const mealTrackingDbPath = path.join(__dirname, 'data', 'meal_tracking.json');
 
-// Helper function to read meal tracking data
 function readMealTracking() {
     try {
         if (fs.existsSync(mealTrackingDbPath)) {
@@ -372,7 +318,6 @@ function readMealTracking() {
     return { meals: [] };
 }
 
-// Helper function to write meal tracking data
 function writeMealTracking(data) {
     try {
         fs.writeFileSync(mealTrackingDbPath, JSON.stringify(data, null, 2));
@@ -383,7 +328,8 @@ function writeMealTracking(data) {
     }
 }
 
-// Log a consumed meal
+// Log a consumed meal for a user. Expects an array of food objects in req.body.foods.
+// Totals are computed server-side so the client doesn't need to re-sum.
 app.post('/api/user/:userId/meals', (req, res) => {
     const userId = parseInt(req.params.userId);
     const { foods, meal_type, dining_hall, consumed_at } = req.body;
@@ -395,7 +341,7 @@ app.post('/api/user/:userId/meals', (req, res) => {
     const trackingData = readMealTracking();
 
     const mealEntry = {
-        id: Date.now(),
+        id: Date.now(), // Millisecond timestamp as unique ID — sufficient for single-user dev use.
         user_id: userId,
         meal_type: meal_type || 'Snack',
         dining_hall: dining_hall || 'Unknown',
@@ -403,10 +349,10 @@ app.post('/api/user/:userId/meals', (req, res) => {
         foods: foods,
         totals: {
             calories: foods.reduce((sum, f) => sum + (f.calories || 0), 0),
-            protein: foods.reduce((sum, f) => sum + (f.protein || 0), 0),
-            fat: foods.reduce((sum, f) => sum + (f.total_fat || 0), 0),
-            carbs: foods.reduce((sum, f) => sum + (f.total_carbohydrate || 0), 0),
-            fiber: foods.reduce((sum, f) => sum + (f.dietary_fiber || 0), 0),
+            protein:  foods.reduce((sum, f) => sum + (f.protein || 0), 0),
+            fat:      foods.reduce((sum, f) => sum + (f.total_fat || 0), 0),
+            carbs:    foods.reduce((sum, f) => sum + (f.total_carbohydrate || 0), 0),
+            fiber:    foods.reduce((sum, f) => sum + (f.dietary_fiber || 0), 0),
         }
     };
 
@@ -419,7 +365,7 @@ app.post('/api/user/:userId/meals', (req, res) => {
     }
 });
 
-// Get user's meal history
+// Return a user's logged meals, optionally filtered by date (YYYY-MM-DD) and limited in count.
 app.get('/api/user/:userId/meals', (req, res) => {
     const userId = parseInt(req.params.userId);
     const { date, limit } = req.query;
@@ -427,26 +373,20 @@ app.get('/api/user/:userId/meals', (req, res) => {
     const trackingData = readMealTracking();
     let userMeals = trackingData.meals.filter(m => m.user_id === userId);
 
-    // Filter by date if provided (YYYY-MM-DD format)
-    if (date) {
-        userMeals = userMeals.filter(m => m.consumed_at.startsWith(date));
-    }
+    if (date) userMeals = userMeals.filter(m => m.consumed_at.startsWith(date));
 
-    // Sort by most recent first
+    // Most-recent first.
     userMeals.sort((a, b) => new Date(b.consumed_at) - new Date(a.consumed_at));
 
-    // Apply limit if provided
-    if (limit) {
-        userMeals = userMeals.slice(0, parseInt(limit));
-    }
+    if (limit) userMeals = userMeals.slice(0, parseInt(limit));
 
     res.json({ meals: userMeals, count: userMeals.length });
 });
 
-// Get today's nutrition totals for user
+// Return summed macros for everything a user logged today (local date, not UTC).
 app.get('/api/user/:userId/today-totals', (req, res) => {
     const userId = parseInt(req.params.userId);
-    // Use local date instead of UTC to avoid timezone issues
+    // Use local date so "today" matches the user's timezone rather than UTC.
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -455,35 +395,26 @@ app.get('/api/user/:userId/today-totals', (req, res) => {
         m.user_id === userId && m.consumed_at.startsWith(today)
     );
 
-    const totals = {
-        calories: 0,
-        protein: 0,
-        fat: 0,
-        carbs: 0,
-        fiber: 0,
-        meals_count: todayMeals.length
-    };
+    const totals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, meals_count: todayMeals.length };
 
     todayMeals.forEach(meal => {
         totals.calories += meal.totals.calories || 0;
-        totals.protein += meal.totals.protein || 0;
-        totals.fat += meal.totals.fat || 0;
-        totals.carbs += meal.totals.carbs || 0;
-        totals.fiber += meal.totals.fiber || 0;
+        totals.protein  += meal.totals.protein  || 0;
+        totals.fat      += meal.totals.fat      || 0;
+        totals.carbs    += meal.totals.carbs    || 0;
+        totals.fiber    += meal.totals.fiber    || 0;
     });
 
     res.json({ totals, date: today, meals: todayMeals });
 });
 
-// Delete a meal entry
+// Delete a specific logged meal. Validates both userId and mealId to prevent cross-user deletions.
 app.delete('/api/user/:userId/meals/:mealId', (req, res) => {
     const userId = parseInt(req.params.userId);
     const mealId = parseInt(req.params.mealId);
 
     const trackingData = readMealTracking();
-    const mealIndex = trackingData.meals.findIndex(m =>
-        m.id === mealId && m.user_id === userId
-    );
+    const mealIndex = trackingData.meals.findIndex(m => m.id === mealId && m.user_id === userId);
 
     if (mealIndex === -1) {
         return res.status(404).json({ error: 'Meal not found' });
@@ -498,12 +429,12 @@ app.delete('/api/user/:userId/meals/:mealId', (req, res) => {
     }
 });
 
-// Health check
+// Simple liveness check endpoint.
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start server (only when not in serverless environment)
+// Only bind the port when running locally (not inside a serverless environment like Vercel).
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
@@ -515,5 +446,5 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     });
 }
 
-// Export for serverless (Vercel)
+// Export the Express app so it can be mounted as a serverless function if needed.
 module.exports = app;

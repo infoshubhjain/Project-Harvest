@@ -1,18 +1,25 @@
+/* index.css — all styles for Project Harvest.
+   Typography: Fraunces (display/headings) + Manrope (body/UI).
+   Palette: warm sand background, burnt-orange accent, dark-brown text.
+   Sections: Layout → Hero → Cards → Buttons → Panel → Filters →
+             Menu Items → Meal Builder → Macro Bar → Responsive breakpoints. */
+
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Manrope:wght@300;400;500;600;700&display=swap');
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
+  /* Core palette — change these to retheme the entire app. */
   --bg:          #f7efe5;
   --bg-2:        #f4e2cf;
   --surface:     #fffaf4;
   --surface-2:   #fff6ec;
   --text:        #2e1f16;
   --muted:       #6a4f3b;
-  --accent:      #d26a3b;
-  --accent-2:    #f2a365;
-  --accent-3:    #f6c27a;
-  --green:       #3f6b4f;
+  --accent:      #d26a3b;  /* Burnt orange — primary CTA colour */
+  --accent-2:    #f2a365;  /* Lighter orange — hover/focus highlights */
+  --accent-3:    #f6c27a;  /* Warm gold — active favorite icon */
+  --green:       #3f6b4f;  /* Used for vegan tags and "meets target" badges */
   --green-bg:    rgba(63, 107, 79, 0.12);
   --shadow:      0 10px 30px rgba(54, 33, 21, 0.12);
   --shadow-soft: 0 4px 14px rgba(54, 33, 21, 0.08);
@@ -632,7 +639,7 @@ body {
   font-size: 0.85rem;
 }
 
-/* ---- Responsive ---- */
+/* ---- Responsive — three breakpoints: tablet (1024), mobile (768), small (520) ---- */
 @media (max-width: 1024px) {
   .builder-layout {
     grid-template-columns: 1fr;

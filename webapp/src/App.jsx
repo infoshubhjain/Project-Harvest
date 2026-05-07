@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 
+// In development Vite proxies /api → localhost:3000/api (served by server.js).
+// In production the build is hosted on GitHub Pages under /Project-Harvest/,
+// so BASE_URL is '/Project-Harvest/' and API files live at /Project-Harvest/api/*.json.
 const API_BASE = import.meta.env.DEV
   ? '/api'
   : `${import.meta.env.BASE_URL}api`
 
+// Images are served from the gh-pages branch; they are not bundled into the Vite build.
 const BASE_IMAGES_URL = 'https://infoshubhjain.github.io/Project-Harvest/images'
 
 const DINING_HALL_IMAGES = {
@@ -42,6 +46,7 @@ const MEAL_PERIOD_MAP = {
 }
 
 const UPCOMING_DAYS = 5
+// Versioned localStorage key so old incompatible favorite formats are silently discarded.
 const FAVORITES_KEY = 'ph_favorites_v1'
 
 const MEAT_KEYWORDS = [
@@ -60,6 +65,9 @@ const SWEET_KEYWORDS = [
   'muffin', 'pudding', 'sweet', 'candy',
 ]
 
+// Parse a YYYY-MM-DD string into a local midnight Date.
+// Appending " 00:00:00" forces local-timezone interpretation; without it, the
+// Date constructor treats ISO strings as UTC and shifts the day by the timezone offset.
 function parseMenuDate(dateStr) {
   if (!dateStr) return null
   const parsed = new Date(`${dateStr} 00:00:00`)
@@ -67,6 +75,8 @@ function parseMenuDate(dateStr) {
   return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
 }
 
+// Return dates that fall within [today, today + days - 1], sorted ascending.
+// Used to populate the date picker with only upcoming (not historical) dates.
 function getUpcomingDates(items, days = UPCOMING_DAYS) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -98,6 +108,8 @@ function formatDateLabel(dateStr) {
   return dateStr
 }
 
+// Infer vegetarian/vegan flags from the item name and category.
+// This is a best-effort heuristic; it is not a guaranteed allergen declaration.
 function getDietFlags(item) {
   const name = (item.name || '').toLowerCase()
   const cat  = (item.category || '').toLowerCase()
@@ -106,6 +118,8 @@ function getDietFlags(item) {
   return { vegetarian: !hasMeat, vegan: !hasMeat && !hasDairyEgg }
 }
 
+// Stable key for a menu item used as the favorites identifier in localStorage.
+// Includes hall + name + meal_type + date so the same dish on different days doesn't collide.
 function getItemKey(hall, item) {
   return `${hall}::${item.name || ''}::${item.meal_type || ''}::${item.date || ''}`
 }
@@ -197,6 +211,9 @@ function MealBuilder({ diningHall, onBack }) {
     })
   }
 
+  // Score a candidate meal combination on calorie closeness, protein closeness,
+  // macro ratio alignment with the chosen goal, and food category variety.
+  // Returns a single scalar; higher is better. Used by generateBest to rank combos.
   function scoreCombo(combo, targetCals, targetProt, goalKey) {
     const cals  = combo.reduce((s, i) => s + (i.calories || 0), 0)
     const prot  = combo.reduce((s, i) => s + (i.protein || 0), 0)
@@ -204,7 +221,7 @@ function MealBuilder({ diningHall, onBack }) {
     const carbs = combo.reduce((s, i) => s + (i.total_carbohydrate || 0), 0)
     if (cals === 0) return -9999
 
-    // Calorie closeness — hard penalize going over by more than 20%
+    // Hard-disqualify combos that go more than 20% over the calorie target.
     const calDiff = cals - targetCals
     if (calDiff > targetCals * 0.20) return -9999
     const calScore = Math.max(0, 100 - Math.abs(calDiff / targetCals) * 200)
@@ -228,8 +245,10 @@ function MealBuilder({ diningHall, onBack }) {
     return calScore * 0.45 + protScore * 0.30 + macroScore * 0.15 + varietyScore * 0.10
   }
 
+  // Run 120 greedy random restarts and return the highest-scoring combo.
+  // Each restart seeds with a non-beverage item, then greedily adds items
+  // that fit within 120% of the calorie target.
   function generateBest(pool, targetCals, targetProt, goalKey) {
-    // Greedy + random restarts: build combos and keep the best
     const MAX_ITEMS = 6
     const RESTARTS  = 120
     let best = null
@@ -580,7 +599,9 @@ function App() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [stats, setStats]                   = useState({ lastUpdated: '', hallCount: 0 })
 
+  // Load dining hall list once on mount; also restore favorites from localStorage.
   useEffect(() => { loadDiningHalls(); setFavorites(getFavorites()) }, [])
+  // Reload the menu whenever the user switches to a different hall.
   useEffect(() => { if (selectedHall) loadMenu(selectedHall) }, [selectedHall])
 
   useEffect(() => {
@@ -608,6 +629,8 @@ function App() {
       const res = await fetch(`${API_BASE}/dining-halls.json`)
       if (!res.ok) throw new Error('Failed to load dining halls')
       const data = await res.json()
+      // Prefer MAIN_DINING_HALLS order if they're present in the data;
+      // fall back to whatever the API returned so new halls appear automatically.
       const halls = MAIN_DINING_HALLS.filter(h => (data.dining_halls || []).includes(h))
       setDiningHalls(halls.length > 0 ? halls : data.dining_halls || [])
       setStats({ lastUpdated: data.last_updated || '', hallCount: (data.dining_halls || []).length })

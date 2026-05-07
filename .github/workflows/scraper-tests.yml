@@ -1,5 +1,7 @@
 name: Scraper Tests
 
+# Run the test suite on every push and PR to master so broken selectors are
+# caught before the next daily scrape runs against the live site.
 on:
   push:
     branches: [ master ]
@@ -26,4 +28,5 @@ jobs:
       - name: Run selector playback tests
         run: |
           cd Backend/scrapers
+          # -q keeps output concise; tests/ contains playback and remote-structure tests.
           pytest -q tests

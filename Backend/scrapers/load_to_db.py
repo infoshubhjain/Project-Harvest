@@ -1,5 +1,10 @@
 """
-Load scraped nutrition data from Excel into SQLite database
+Load scraped nutrition data from Excel into SQLite database.
+
+Usage:
+    python load_to_db.py [excel_file.xlsx]
+
+If no file is given, picks the most recently modified .xlsx in the current directory.
 """
 import sqlite3
 import pandas as pd
@@ -8,7 +13,7 @@ from datetime import datetime
 
 
 def create_nutrition_table(conn):
-    """Create the nutrition table if it doesn't exist"""
+    """Create the nutrition_data table and its indexes if they don't already exist."""
     cursor = conn.cursor()
 
     cursor.execute('''
@@ -36,21 +41,10 @@ def create_nutrition_table(conn):
         )
     ''')
 
-    # Create indexes for faster queries
-    cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_dining_hall
-        ON nutrition_data(dining_hall)
-    ''')
-
-    cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_date_meal
-        ON nutrition_data(date, meal_type)
-    ''')
-
-    cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_name
-        ON nutrition_data(name)
-    ''')
+    # Indexes speed up the per-hall and per-date queries used by export_to_json.py and server.js.
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_dining_hall ON nutrition_data(dining_hall)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_date_meal   ON nutrition_data(date, meal_type)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_name        ON nutrition_data(name)')
 
     conn.commit()
     print("✓ Table 'nutrition_data' created/verified")
@@ -58,14 +52,16 @@ def create_nutrition_table(conn):
 
 def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
     """
-    Load nutrition data from Excel file into SQLite database
+    Load nutrition data from an Excel file into the SQLite database.
+
+    Strategy: delete only the (dining_hall, date) pairs present in the incoming
+    data, then re-insert. This preserves history for dates not covered by the
+    current scrape (e.g. yesterday's data remains intact after a today-only run).
 
     Args:
-        excel_file: Path to the Excel file with nutrition data
-        db_file: Path to SQLite database file (will be created if doesn't exist)
+        excel_file: Path to the Excel file produced by nutrition_scraper.py.
+        db_file:    Path to SQLite DB (created if it doesn't exist).
     """
-
-    # Check if Excel file exists
     if not os.path.exists(excel_file):
         print(f"Error: Excel file not found: {excel_file}")
         return False
@@ -73,7 +69,6 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
     print(f"\nLoading data from: {excel_file}")
     print(f"Database: {db_file}\n")
 
-    # Read Excel file
     try:
         df = pd.read_excel(excel_file)
         print(f"✓ Read {len(df)} rows from Excel")
@@ -81,17 +76,12 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
         print(f"Error reading Excel file: {e}")
         return False
 
-    # Connect to database
     conn = sqlite3.connect(db_file)
-
-    # Create table
     create_nutrition_table(conn)
-
-    # Prepare data for insertion
     cursor = conn.cursor()
 
-    # Delete only the (dining_hall, date) pairs we are about to re-insert so
-    # that previously scraped dates for the same hall are preserved.
+    # Targeted delete: only remove rows for the (hall, date) combos we are about to replace,
+    # leaving all other historical rows untouched.
     if 'dining_hall' in df.columns and 'date' in df.columns:
         hall_date_pairs = df[['dining_hall', 'date']].drop_duplicates().values.tolist()
         print(f"Replacing data for {len(hall_date_pairs)} (hall, date) combinations...")
@@ -102,14 +92,14 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
             )
         print(f"✓ Cleared stale rows for the scraped (hall, date) pairs only")
     elif 'dining_hall' in df.columns:
+        # Older Excel files may lack a date column; fall back to clearing by hall only.
         halls_to_update = df['dining_hall'].unique()
         print(f"Warning: no date column — falling back to clearing all rows for: {', '.join(halls_to_update)}")
         placeholders = ','.join(['?'] * len(halls_to_update))
         cursor.execute(f"DELETE FROM nutrition_data WHERE dining_hall IN ({placeholders})", list(halls_to_update))
     else:
         print("Warning: No dining_hall column found, appending data without clearing old records.")
-    
-    # Insert data
+
     inserted = 0
     failed = 0
 
@@ -130,17 +120,18 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
                 row.get('category', ''),
                 row.get('name', ''),
                 row.get('serving_size', ''),
-                float(row.get('calories', 0)) if pd.notna(row.get('calories')) else 0.0,
-                float(row.get('total_fat', 0)) if pd.notna(row.get('total_fat')) else 0.0,
-                float(row.get('saturated_fat', 0)) if pd.notna(row.get('saturated_fat')) else 0.0,
-                float(row.get('trans_fat', 0)) if pd.notna(row.get('trans_fat')) else 0.0,
-                float(row.get('cholesterol', 0)) if pd.notna(row.get('cholesterol')) else 0.0,
-                float(row.get('sodium', 0)) if pd.notna(row.get('sodium')) else 0.0,
-                float(row.get('potassium', 0)) if pd.notna(row.get('potassium')) else 0.0,
+                # Use 0.0 instead of None/NaN so numeric queries don't break.
+                float(row.get('calories', 0))           if pd.notna(row.get('calories'))           else 0.0,
+                float(row.get('total_fat', 0))          if pd.notna(row.get('total_fat'))          else 0.0,
+                float(row.get('saturated_fat', 0))      if pd.notna(row.get('saturated_fat'))      else 0.0,
+                float(row.get('trans_fat', 0))          if pd.notna(row.get('trans_fat'))          else 0.0,
+                float(row.get('cholesterol', 0))        if pd.notna(row.get('cholesterol'))        else 0.0,
+                float(row.get('sodium', 0))             if pd.notna(row.get('sodium'))             else 0.0,
+                float(row.get('potassium', 0))          if pd.notna(row.get('potassium'))          else 0.0,
                 float(row.get('total_carbohydrate', 0)) if pd.notna(row.get('total_carbohydrate')) else 0.0,
-                float(row.get('dietary_fiber', 0)) if pd.notna(row.get('dietary_fiber')) else 0.0,
-                float(row.get('sugars', 0)) if pd.notna(row.get('sugars')) else 0.0,
-                float(row.get('protein', 0)) if pd.notna(row.get('protein')) else 0.0
+                float(row.get('dietary_fiber', 0))      if pd.notna(row.get('dietary_fiber'))      else 0.0,
+                float(row.get('sugars', 0))             if pd.notna(row.get('sugars'))             else 0.0,
+                float(row.get('protein', 0))            if pd.notna(row.get('protein'))            else 0.0
             ))
             inserted += 1
         except Exception as e:
@@ -153,28 +144,23 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
     if failed > 0:
         print(f"✗ Failed to insert {failed} rows")
 
-    # Display summary statistics
+    # Summary stats so CI logs are easy to sanity-check.
     print("\n" + "="*60)
     print("DATABASE SUMMARY")
     print("="*60)
 
     cursor.execute("SELECT COUNT(*) FROM nutrition_data")
-    total = cursor.fetchone()[0]
-    print(f"Total items: {total}")
+    print(f"Total items: {cursor.fetchone()[0]}")
 
     cursor.execute("SELECT COUNT(DISTINCT dining_hall) FROM nutrition_data")
-    halls = cursor.fetchone()[0]
-    print(f"Dining halls: {halls}")
+    print(f"Dining halls: {cursor.fetchone()[0]}")
 
     cursor.execute("SELECT COUNT(DISTINCT date) FROM nutrition_data")
-    dates = cursor.fetchone()[0]
-    print(f"Unique dates: {dates}")
+    print(f"Unique dates: {cursor.fetchone()[0]}")
 
     cursor.execute("SELECT COUNT(DISTINCT meal_type) FROM nutrition_data")
-    meals = cursor.fetchone()[0]
-    print(f"Meal types: {meals}")
+    print(f"Meal types: {cursor.fetchone()[0]}")
 
-    # Show sample data
     print("\n" + "="*60)
     print("SAMPLE DATA (First 5 items)")
     print("="*60)
@@ -184,7 +170,6 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
         FROM nutrition_data
         LIMIT 5
     """)
-
     for row in cursor.fetchall():
         print(f"{row[0]} | {row[1]} | {row[2]} | {row[3]} | {row[4]} cal")
 
@@ -195,8 +180,7 @@ def load_excel_to_database(excel_file, db_file='../data/nutrition_data.db'):
 
 
 def query_database(db_file='nutrition_data.db'):
-    """Example queries to demonstrate database usage"""
-
+    """Run a handful of example queries for quick manual verification after a load."""
     if not os.path.exists(db_file):
         print(f"Database not found: {db_file}")
         return
@@ -208,7 +192,6 @@ def query_database(db_file='nutrition_data.db'):
     print("EXAMPLE QUERIES")
     print("="*60)
 
-    # Query 1: Items by dining hall
     print("\n1. Items by dining hall:")
     cursor.execute("""
         SELECT dining_hall, COUNT(*) as item_count
@@ -219,7 +202,6 @@ def query_database(db_file='nutrition_data.db'):
     for row in cursor.fetchall():
         print(f"   {row[0]}: {row[1]} items")
 
-    # Query 2: High protein items
     print("\n2. High protein items (>20g):")
     cursor.execute("""
         SELECT name, protein, dining_hall, meal_type
@@ -231,7 +213,6 @@ def query_database(db_file='nutrition_data.db'):
     for row in cursor.fetchall():
         print(f"   {row[0]} - {row[1]}g protein ({row[2]}, {row[3]})")
 
-    # Query 3: Average calories by meal type
     print("\n3. Average calories by meal type:")
     cursor.execute("""
         SELECT meal_type, ROUND(AVG(calories), 1) as avg_calories
@@ -248,11 +229,10 @@ def query_database(db_file='nutrition_data.db'):
 if __name__ == "__main__":
     import sys
 
-    # Check for command line argument
     if len(sys.argv) > 1:
         excel_file = sys.argv[1]
     else:
-        # Default: look for the most recent Excel file in current directory
+        # Auto-discover: pick the newest .xlsx in the current directory.
         excel_files = [f for f in os.listdir('.') if f.endswith('.xlsx') and not f.startswith('~')]
 
         if not excel_files:
@@ -260,16 +240,13 @@ if __name__ == "__main__":
             print("\nUsage: python load_to_db.py [excel_file.xlsx]")
             sys.exit(1)
 
-        # Use most recently modified Excel file
         excel_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
         excel_file = excel_files[0]
         print(f"Using most recent Excel file: {excel_file}")
 
-    # Load data
     success = load_excel_to_database(excel_file)
 
     if success:
-        # Show example queries
         query_database()
 
         print("\n" + "="*60)
